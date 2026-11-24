@@ -1,0 +1,2385 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fundación Industrial — Cálculo de Proforma · Asesor Comercial</title>
+  
+  <!-- Fuente Inter & Montserrat de Google Fonts para identidad tipográfica geométrica -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Montserrat:wght@700;800;900&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            display: ['Montserrat', 'Inter', 'sans-serif'],
+          },
+          colors: {
+            fi: {
+              red: '#D11D27',
+              redHover: '#B0151E',
+              redSoft: '#FEF2F2',
+              redTint: '#FEE2E2',
+              orange: '#F16522',
+              orangeHover: '#D95314',
+              orangeSoft: '#FFF7ED',
+              yellow: '#F7D100',
+              amberText: '#D97706',
+              yellowSoft: '#FEFCE8',
+              charcoal: '#18181B',
+              bg: '#F5F5F6',
+              border: '#E4E4E7',
+            }
+          }
+        }
+      }
+    };
+  </script>
+
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- SQL.js (SQLite en WebAssembly) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
+  
+  <!-- jsPDF y jsPDF-AutoTable para generación de PDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #F5F5F6;
+      color: #18181B;
+    }
+    .tabular-nums {
+      font-variant-numeric: tabular-nums;
+    }
+    .logo-wordmark {
+      font-family: 'Montserrat', 'Inter', sans-serif;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+    }
+    /* Scrollbar estilizado para tablas financieras anchas */
+    .custom-scrollbar::-webkit-scrollbar {
+      height: 8px;
+      width: 8px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #F5F5F6;
+      border-radius: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #D4D4D8;
+      border-radius: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: #A1A1AA;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased selection:bg-[#D11D27] selection:text-white">
+
+  <!-- Barra de Acento Tricolor Superior de Fundación Industrial -->
+  <div class="w-full h-1.5 flex shrink-0">
+    <div class="w-1/2 bg-[#D11D27]"></div>
+    <div class="w-1/4 bg-[#F7D100]"></div>
+    <div class="w-1/4 bg-[#F16522]"></div>
+  </div>
+
+  <!-- Barra de Navegación Superior Oscura (#18181B) Institucional -->
+  <header class="bg-[#18181B] text-white shadow-md border-b border-zinc-800 sticky top-0 z-30">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+      
+      <!-- Logo Oficial SVG Vectorial + Título del Sistema -->
+      <div class="flex items-center gap-4">
+        <a href="#" class="flex items-center shrink-0 focus:outline-none" aria-label="Fundación Industrial">
+          <svg class="h-11 sm:h-12 w-auto" viewBox="0 0 390 160" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="fiLogoTitleNav">
+            <title id="fiLogoTitleNav">Fundación Industrial</title>
+            <!-- Trazo Rojo (#D11D27): F diagonal a 45° -->
+            <path d="M72 36 L26 82 L88 144" stroke="#D11D27" stroke-width="15" stroke-linecap="round" stroke-linejoin="round" />
+            <path d="M57 113 L93 77" stroke="#D11D27" stroke-width="15" stroke-linecap="round" />
+            <!-- Trazo Amarillo Dorado (#F7D100): Flecha diagonal ascendente -->
+            <path d="M55.5 83.5 L121.5 17.5" stroke="#F7D100" stroke-width="15" stroke-linecap="round" />
+            <path d="M89.5 17.5 L121.5 17.5 L121.5 49.5" stroke="#F7D100" stroke-width="15" stroke-linecap="round" stroke-linejoin="round" />
+            <!-- Trazo Naranja Corporativo (#F16522): Barra inferior paralela ('I') -->
+            <path d="M85.5 115.5 L108.5 92.5" stroke="#F16522" stroke-width="15" stroke-linecap="round" />
+            <!-- Tipografía Geométrica ExtraBold en Blanco sobre Navbar Oscuro -->
+            <text x="148" y="74" fill="#FFFFFF" class="logo-wordmark" font-size="31">FUNDACIÓN</text>
+            <text x="148" y="112" fill="#FFFFFF" class="logo-wordmark" font-size="31">INDUSTRIAL</text>
+          </svg>
+        </a>
+
+        <div class="hidden sm:block h-9 w-px bg-zinc-700"></div>
+
+        <div class="hidden sm:block">
+          <h1 class="text-sm lg:text-base font-bold text-white tracking-tight leading-tight">
+            Sistema de Proformas · Método Francés
+          </h1>
+          <p class="text-xs text-zinc-400 font-medium">
+            Gastos Administrativos y Seguro Nivelado
+          </p>
+        </div>
+      </div>
+
+      <!-- Indicador SQLite y Botón de Exportación BD -->
+      <div class="flex flex-wrap items-center gap-2.5 self-start md:self-auto">
+        <span id="dbStatusBadge" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-white/10 text-zinc-200 border border-white/15">
+          <span id="dbStatusDot" class="w-2 h-2 rounded-full bg-[#F7D100] animate-pulse"></span>
+          <span id="dbStatusText">Iniciando SQLite...</span>
+        </span>
+        <button type="button" id="btnExportSqlite" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-[#D11D27] hover:bg-[#B0151E] text-white shadow-xs transition cursor-pointer" title="Descargar respaldo binario SQLite">
+          <i data-lucide="database" class="w-3.5 h-3.5 text-[#F7D100]"></i>
+          Exportar BD (.sqlite)
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Contenido Principal -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+    <!-- Banner de Modo Edición (oculto por defecto) -->
+    <div id="editModeBanner" class="hidden bg-[#FFF7ED] border-l-4 border-[#F16522] rounded-r-2xl p-4 shadow-xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-[#F16522]/15 text-[#F16522] flex items-center justify-center shrink-0">
+          <i data-lucide="edit-3" class="w-5 h-5"></i>
+        </div>
+        <div>
+          <p class="text-sm font-bold text-[#18181B]">
+            Modo Edición Activo — Proforma <span id="editProformaIdLabel">0</span>
+          </p>
+          <p class="text-xs text-zinc-600">
+            Al guardar, se actualizará este registro directamente en la base de datos SQLite.
+          </p>
+        </div>
+      </div>
+      <button type="button" id="btnCancelEdit" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-white hover:bg-zinc-100 text-[#18181B] border border-[#E4E4E7] transition self-start sm:self-auto cursor-pointer">
+        <i data-lucide="x" class="w-3.5 h-3.5 text-[#D11D27]"></i>
+        Cancelar Edición
+      </button>
+    </div>
+
+    <!-- Sección Superior: Datos del Cliente + Parámetros Financieros -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      
+      <!-- COLUMNA IZQUIERDA (5 cols): Datos del Cliente -->
+      <div class="lg:col-span-5">
+        <section class="bg-white rounded-2xl shadow-xs border border-[#E4E4E7] p-5 sm:p-6 h-full flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between border-b border-[#E4E4E7] pb-3.5 mb-4">
+              <div class="flex items-center gap-2.5">
+                <span class="w-7 h-7 rounded-lg bg-[#FEF2F2] text-[#D11D27] font-bold text-xs flex items-center justify-center border border-[#FEE2E2]">1</span>
+                <h2 class="text-base font-bold text-[#18181B]">Datos del Cliente</h2>
+              </div>
+              <span class="text-[11px] font-medium text-zinc-400">* Obligatorios</span>
+            </div>
+
+            <form id="clientForm" class="space-y-4" novalidate>
+              <div>
+                <label for="nombreCliente" class="block text-xs font-semibold text-[#18181B] mb-1">
+                  Nombre del Cliente / Razón Social <span class="text-[#D11D27]">*</span>
+                </label>
+                <input type="text" id="nombreCliente" placeholder="Ej. Juan Carlos Pérez" required
+                  class="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 text-sm text-[#18181B] placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#D11D27]/25 focus:border-[#D11D27] transition" />
+                <p id="errNombre" class="hidden text-xs text-[#D11D27] mt-1 font-medium">Ingrese el nombre o razón social del cliente.</p>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                <div>
+                  <label for="documento" class="block text-xs font-semibold text-[#18181B] mb-1">
+                    Nro. de Documento / C.I. <span class="text-[#D11D27]">*</span>
+                  </label>
+                  <input type="text" id="documento" inputmode="numeric" autocomplete="off" placeholder="Ej. 4.567.890" required
+                    class="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 text-sm font-medium text-[#18181B] tabular-nums placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#D11D27]/25 focus:border-[#D11D27] transition" />
+                  <p id="errDocumento" class="hidden text-xs text-[#D11D27] mt-1 font-medium">Ingrese el Nro. de Documento / C.I.</p>
+                  <p class="text-[10px] text-zinc-400 mt-1">Formato automático C.I., RUC (-DV) o Pasaporte</p>
+                </div>
+
+                <div>
+                  <label for="telefono" class="block text-xs font-semibold text-[#18181B] mb-1">
+                    Teléfono de Contacto <span class="text-[#D11D27]">*</span>
+                  </label>
+                  <input type="text" id="telefono" placeholder="Ej. 0981 555-123" required
+                    class="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 text-sm text-[#18181B] placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#D11D27]/25 focus:border-[#D11D27] transition" />
+                  <p id="errTelefono" class="hidden text-xs text-[#D11D27] mt-1 font-medium">Ingrese un teléfono válido.</p>
+                </div>
+              </div>
+
+              <div>
+                <label for="observaciones" class="block text-xs font-semibold text-[#18181B] mb-1">
+                  Observaciones / Destino <span class="text-zinc-400 font-normal">(opcional)</span>
+                </label>
+                <textarea id="observaciones" rows="3" placeholder="Ej. Capital operativo / Equipamiento / Línea microempresa..."
+                  class="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 text-sm text-[#18181B] placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#D11D27]/25 focus:border-[#D11D27] transition resize-none"></textarea>
+              </div>
+            </form>
+          </div>
+
+          <!-- Botonera de Acciones Principales -->
+          <div class="mt-6 pt-4 border-t border-[#E4E4E7] space-y-2.5">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              <button type="button" id="btnGuardarProforma"
+                class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white bg-[#D11D27] hover:bg-[#B0151E] active:scale-[0.99] shadow-xs transition cursor-pointer">
+                <i data-lucide="save" class="w-4 h-4"></i>
+                <span id="btnGuardarLabel">Guardar Proforma</span>
+              </button>
+
+              <button type="button" id="btnGenerarPdf"
+                class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white bg-[#F16522] hover:bg-[#D95314] active:scale-[0.99] shadow-xs transition cursor-pointer">
+                <i data-lucide="file-text" class="w-4 h-4"></i>
+                Generar PDF
+              </button>
+            </div>
+
+            <button type="button" id="btnNuevaProforma"
+              class="w-full inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold text-[#18181B] bg-[#F5F5F6] hover:bg-zinc-200/80 border border-[#E4E4E7] transition cursor-pointer">
+              <i data-lucide="rotate-ccw" class="w-3.5 h-3.5 text-zinc-600"></i>
+              Limpiar / Nueva Proforma
+            </button>
+          </div>
+        </section>
+      </div>
+
+      <!-- COLUMNA DERECHA (7 cols): Parámetros Editables del Cálculo Financiero -->
+      <div class="lg:col-span-7">
+        <section class="bg-white rounded-2xl shadow-xs border border-[#E4E4E7] p-5 sm:p-6 h-full flex flex-col justify-between">
+          <div>
+            <div class="flex flex-wrap items-center justify-between gap-2 border-b border-[#E4E4E7] pb-3.5 mb-5">
+              <div class="flex items-center gap-2.5">
+                <span class="w-7 h-7 rounded-lg bg-[#FFF7ED] text-[#F16522] font-bold text-xs flex items-center justify-center border border-[#FFEDD5]">2</span>
+                <div>
+                  <h2 class="text-base font-bold text-[#18181B]">Parámetros Editables — Método Francés</h2>
+                  <p class="text-xs text-zinc-500">Modifica cualquier parámetro para recalcular la tabla de amortización en vivo</p>
+                </div>
+              </div>
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#FEFCE8] text-[#D97706] text-xs font-semibold border border-[#FEF08A]">
+                <span class="w-1.5 h-1.5 rounded-full bg-[#F7D100]"></span>
+                Recálculo en vivo
+              </span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <!-- Fecha de Desembolso -->
+              <div>
+                <label for="fechaDesembolso" class="block text-xs font-semibold text-[#18181B] mb-1">
+                  Fecha de Desembolso
+                </label>
+                <div class="relative">
+                  <input type="date" id="fechaDesembolso"
+                    class="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 text-sm font-semibold text-[#18181B] tabular-nums focus:outline-none focus:ring-2 focus:ring-[#D11D27]/25 focus:border-[#D11D27] transition" />
+                </div>
+                <div class="mt-1.5 flex items-center justify-between text-[11px] tabular-nums">
+                  <span class="text-zinc-500">Plazo total operación:</span>
+                  <span id="lblPlazoDias" class="font-semibold text-[#18181B]">0 días</span>
+                </div>
+              </div>
+
+              <!-- Primer Vencimiento -->
+              <div>
+                <label for="primerVencimiento" class="block text-xs font-semibold text-[#18181B] mb-1">
+                  Primer Vencimiento (Cuota 1)
+                </label>
+                <div class="relative">
+                  <input type="date" id="primerVencimiento"
+                    class="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 text-sm font-semibold text-[#18181B] tabular-nums focus:outline-none focus:ring-2 focus:ring-[#D11D27]/25 focus:border-[#D11D27] transition" />
+                </div>
+                <div class="mt-1.5 flex items-center justify-between gap-1 text-[11px] tabular-nums">
+                  <span class="text-zinc-500">Dif.: <strong id="lblDiasPrimerVto" class="text-[#18181B]">30 días</strong></span>
+                  <span id="lblInteresDiasExtraBadge" class="font-semibold text-zinc-500">Sin recargo (≤ 30d)</span>
+                </div>
+              </div>
+
+              <!-- Capital Solicitado (Gs.) con Máscara en Tiempo Real -->
+              <div>
+                <label for="capital" class="block text-xs font-semibold text-[#18181B] mb-1">
+                  Capital Solicitado (Gs.)
+                </label>
+                <div class="relative">
+                  <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-xs font-bold text-zinc-500 pointer-events-none">Gs.</span>
+                  <input type="text" id="capital" inputmode="numeric" autocomplete="off" value="10.000.000" placeholder="10.000.000"
+                    class="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-zinc-300 text-sm font-bold text-[#18181B] tabular-nums focus:outline-none focus:ring-2 focus:ring-[#D11D27]/25 focus:border-[#D11D27] transition" />
+                </div>
+                <div class="flex flex-wrap items-center justify-between gap-1.5 mt-1.5">
+                  <div class="flex items-center gap-1">
+                    <button type="button" data-inc="1000000" class="quick-capital-inc px-2 py-0.5 text-[11px] font-bold rounded bg-[#FEF2F2] hover:bg-[#FEE2E2] text-[#D11D27] border border-[#FEE2E2] transition cursor-pointer">+1M</button>
+                    <button type="button" data-inc="5000000" class="quick-capital-inc px-2 py-0.5 text-[11px] font-bold rounded bg-[#FFF7ED] hover:bg-[#FFEDD5] text-[#F16522] border border-[#FFEDD5] transition cursor-pointer">+5M</button>
+                    <button type="button" data-inc="10000000" class="quick-capital-inc px-2 py-0.5 text-[11px] font-bold rounded bg-[#FEFCE8] hover:bg-[#FEF08A]/70 text-[#D97706] border border-[#FEF08A] transition cursor-pointer">+10M</button>
+                  </div>
+                  <p id="capitalFormattedHint" class="text-[11px] text-zinc-500 font-medium tabular-nums">
+                    Gs. 10.000.000
+                  </p>
+                </div>
+              </div>
+
+              <!-- Cantidad de Cuotas Mensuales -->
+              <div>
+                <label for="plazoMeses" class="block text-xs font-semibold text-[#18181B] mb-1">
+                  Cantidad de Cuotas Mensuales (n)
+                </label>
+                <div class="relative">
+                  <input type="number" id="plazoMeses" value="12" min="1" max="120" step="1"
+                    class="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 text-sm font-semibold text-[#18181B] tabular-nums focus:outline-none focus:ring-2 focus:ring-[#D11D27]/25 focus:border-[#D11D27] transition" />
+                  <span class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-xs font-medium text-zinc-400 pointer-events-none">meses</span>
+                </div>
+                <div class="flex flex-wrap gap-1.5 mt-1.5">
+                  <button type="button" data-plazo="6" class="quick-plazo px-2 py-0.5 text-[11px] font-semibold rounded bg-[#F5F5F6] hover:bg-zinc-200 text-zinc-700 border border-[#E4E4E7] transition cursor-pointer">6m</button>
+                  <button type="button" data-plazo="12" class="quick-plazo px-2 py-0.5 text-[11px] font-semibold rounded bg-[#F5F5F6] hover:bg-zinc-200 text-zinc-700 border border-[#E4E4E7] transition cursor-pointer">12m</button>
+                  <button type="button" data-plazo="18" class="quick-plazo px-2 py-0.5 text-[11px] font-semibold rounded bg-[#F5F5F6] hover:bg-zinc-200 text-zinc-700 border border-[#E4E4E7] transition cursor-pointer">18m</button>
+                  <button type="button" data-plazo="24" class="quick-plazo px-2 py-0.5 text-[11px] font-semibold rounded bg-[#F5F5F6] hover:bg-zinc-200 text-zinc-700 border border-[#E4E4E7] transition cursor-pointer">24m</button>
+                  <button type="button" data-plazo="36" class="quick-plazo px-2 py-0.5 text-[11px] font-semibold rounded bg-[#F5F5F6] hover:bg-zinc-200 text-zinc-700 border border-[#E4E4E7] transition cursor-pointer">36m</button>
+                </div>
+              </div>
+
+              <!-- Tasa de IVA (%) -->
+              <div>
+                <label for="ivaPct" class="block text-xs font-semibold text-[#18181B] mb-1">
+                  Tasa de IVA (%)
+                </label>
+                <div class="relative">
+                  <input type="number" id="ivaPct" value="10" min="0" max="50" step="0.5"
+                    class="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 text-sm font-semibold text-[#18181B] tabular-nums focus:outline-none focus:ring-2 focus:ring-[#D11D27]/25 focus:border-[#D11D27] transition" />
+                  <span class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-xs font-bold text-zinc-400 pointer-events-none">% IVA</span>
+                </div>
+                <p class="text-[11px] text-zinc-500 mt-1.5">
+                  Gravamen aplicado sobre intereses, gastos administrativos y seguro.
+                </p>
+              </div>
+
+              <!-- Tasa Anual Nominal — T.A.N. (%) -->
+              <div>
+                <label for="tasaAnual" class="block text-xs font-semibold text-[#18181B] mb-1">
+                  Tasa Anual Nominal — T.A.N. (%)
+                </label>
+                <div class="relative">
+                  <input type="number" id="tasaAnual" value="24" min="0" max="200" step="0.1"
+                    class="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 text-sm font-semibold text-[#18181B] tabular-nums focus:outline-none focus:ring-2 focus:ring-[#D11D27]/25 focus:border-[#D11D27] transition" />
+                  <span class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-xs font-bold text-zinc-400 pointer-events-none">% T.A.N.</span>
+                </div>
+                <!-- Indicador en tiempo real de T.A.E., Tasa c/ IVA y Tasa Mensual -->
+                <div class="mt-1.5 p-2.5 rounded-xl bg-[#FEF2F2] border border-[#FEE2E2] flex flex-col gap-1 text-[11px] tabular-nums">
+                  <div class="flex justify-between text-zinc-700">
+                    <span>T.A.E. (Efectiva Anual):</span>
+                    <span id="lblTaeAnual" class="font-extrabold text-[#18181B]">26,82%</span>
+                  </div>
+                  <div class="flex justify-between text-zinc-600">
+                    <span>Tasa Anual c/ IVA (<span id="lblIvaRef">10</span>%):</span>
+                    <span id="lblTasaAnualIva" class="font-bold text-[#F16522]">26,40%</span>
+                  </div>
+                  <div class="flex justify-between text-zinc-800 pt-0.5 border-t border-[#FEE2E2]">
+                    <span class="font-semibold">Mensual / Total c/ IVA:</span>
+                    <span class="font-extrabold text-[#D11D27]"><span id="lblTasaMensual">2,0000%</span> / <span id="lblTasaMensualIva">2,2000%</span></span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Porcentaje de Gastos Administrativos (%) -->
+              <div>
+                <label for="pctGastos" class="block text-xs font-semibold text-[#18181B] mb-1">
+                  Porcentaje de Gastos Administrativos (%)
+                </label>
+                <div class="relative">
+                  <input type="number" id="pctGastos" value="2" min="0" max="50" step="0.1"
+                    class="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 text-sm font-semibold text-[#18181B] tabular-nums focus:outline-none focus:ring-2 focus:ring-[#D11D27]/25 focus:border-[#D11D27] transition" />
+                  <span class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-xs font-bold text-zinc-400 pointer-events-none">%</span>
+                </div>
+                <div id="lblGastoAdmInfo" class="mt-1.5 p-2 rounded-xl bg-[#FFF7ED] border border-[#FFEDD5] text-[11px] text-zinc-700 tabular-nums space-y-0.5">
+                  <div class="flex justify-between">
+                    <span>G. Adm. Base + IVA:</span>
+                    <span id="lblGAdmTotal" class="font-bold text-[#18181B]">Gs. 200.000 + Gs. 20.000</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span>G. Adm. Mensual Prorrateado:</span>
+                    <span id="lblGAdmMensual" class="font-bold text-[#F16522]">Gs. 18.333 / mes</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Tasa de Seguro (%) -->
+              <div>
+                <label for="tasaSeguro" class="block text-xs font-semibold text-[#18181B] mb-1">
+                  Tasa de Seguro (%)
+                </label>
+                <div class="relative">
+                  <input type="number" id="tasaSeguro" value="0.25" min="0" max="10" step="0.01"
+                    class="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 text-sm font-semibold text-[#18181B] tabular-nums focus:outline-none focus:ring-2 focus:ring-[#D11D27]/25 focus:border-[#D11D27] transition" />
+                  <span class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-xs font-bold text-zinc-400 pointer-events-none">% mensual</span>
+                </div>
+                <!-- Botones rápidos de selección de seguro -->
+                <div class="flex flex-wrap gap-1.5 mt-2">
+                  <button type="button" data-seguro="0.25" class="quick-seguro px-2.5 py-1 text-[11px] font-semibold rounded-lg bg-[#FEF2F2] text-[#D11D27] border border-[#FEE2E2] hover:bg-[#FEE2E2] transition cursor-pointer">
+                    0,25% (Micro)
+                  </button>
+                  <button type="button" data-seguro="0.12" class="quick-seguro px-2.5 py-1 text-[11px] font-semibold rounded-lg bg-[#FFF7ED] text-[#F16522] border border-[#FFEDD5] hover:bg-[#FFEDD5] transition cursor-pointer">
+                    0,12% (Funcionario)
+                  </button>
+                  <button type="button" data-seguro="0" class="quick-seguro px-2.5 py-1 text-[11px] font-semibold rounded-lg bg-[#F5F5F6] text-zinc-700 border border-[#E4E4E7] hover:bg-zinc-200 transition cursor-pointer">
+                    0% (Sin Seguro)
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Selector de Redondeo Institucional -->
+          <div class="mt-5 pt-4 border-t border-[#E4E4E7] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div class="flex items-center gap-2">
+              <label for="modoRedondeo" class="text-xs font-semibold text-[#18181B] whitespace-nowrap">
+                Criterio de Redondeo:
+              </label>
+              <select id="modoRedondeo"
+                class="px-3 py-1.5 rounded-xl border border-zinc-300 bg-[#F5F5F6] text-xs font-semibold text-[#18181B] focus:outline-none focus:ring-2 focus:ring-[#D11D27]/25 focus:border-[#D11D27] cursor-pointer">
+                <option value="1" selected>Redondeo Institucional (Entero)</option>
+                <option value="0">Exacto con decimales</option>
+              </select>
+            </div>
+            <span id="lblSeguroNiveladoPreview" class="text-xs font-bold text-[#D97706] bg-[#FEFCE8] border border-[#FEF08A] px-3 py-1.5 rounded-xl tabular-nums">
+              Seguro igual: Gs. 15.670 / mes
+            </span>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <!-- Sección de 4 Tarjetas KPI Superiores con Acentos Corporativos de Fundación Industrial -->
+    <section aria-label="Resumen Financiero" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <!-- KPI 1: Cuota Final Mensual (Acento Rojo #D11D27) -->
+      <div class="bg-white rounded-2xl p-4 sm:p-5 border border-[#E4E4E7] border-t-4 border-t-[#D11D27] shadow-xs relative overflow-hidden">
+        <div class="flex items-center justify-between">
+          <p class="text-xs font-bold uppercase tracking-wider text-[#D11D27]">Cuota Final Mensual</p>
+          <span class="w-8 h-8 rounded-lg bg-[#FEF2F2] text-[#D11D27] flex items-center justify-center">
+            <i data-lucide="wallet" class="w-4 h-4"></i>
+          </span>
+        </div>
+        <p id="kpiCuotaFinal" class="text-2xl font-extrabold text-[#18181B] mt-2 tabular-nums tracking-tight">Gs. 989.932</p>
+        <p id="kpiCuotaSub" class="text-[11px] text-zinc-500 mt-1 tabular-nums">12 cuotas fijas (Base + G.Adm + Seguro)</p>
+      </div>
+
+      <!-- KPI 2: Base + G. Adm — Cuota Base + Gastos Adm. (Acento Naranja #F16522) -->
+      <div class="bg-white rounded-2xl p-4 sm:p-5 border border-[#E4E4E7] border-t-4 border-t-[#F16522] shadow-xs">
+        <div class="flex items-center justify-between">
+          <p class="text-xs font-bold uppercase tracking-wider text-[#F16522]">Base + G. Adm</p>
+          <span class="w-8 h-8 rounded-lg bg-[#FFF7ED] text-[#F16522] flex items-center justify-center">
+            <i data-lucide="layers" class="w-4 h-4"></i>
+          </span>
+        </div>
+        <p id="kpiCuotaBaseGastos" class="text-2xl font-extrabold text-[#18181B] mt-2 tabular-nums tracking-tight">Gs. 974.262</p>
+        <p id="kpiCuotaBaseGastosSub" class="text-[11px] text-zinc-500 mt-1 tabular-nums">Base: Gs. 955.929 + G.Adm: Gs. 18.333</p>
+      </div>
+
+      <!-- KPI 3: Seguro Nivelado Mensual (Acento Amarillo Dorado #D97706) -->
+      <div class="bg-white rounded-2xl p-4 sm:p-5 border border-[#E4E4E7] border-t-4 border-t-[#F7D100] shadow-xs">
+        <div class="flex items-center justify-between">
+          <p class="text-xs font-bold uppercase tracking-wider text-[#D97706]">Seguro Nivelado Mensual</p>
+          <span class="w-8 h-8 rounded-lg bg-[#FEFCE8] text-[#D97706] flex items-center justify-center">
+            <i data-lucide="shield-check" class="w-4 h-4"></i>
+          </span>
+        </div>
+        <p id="kpiSeguroNivelado" class="text-2xl font-extrabold text-[#18181B] mt-2 tabular-nums tracking-tight">Gs. 15.670</p>
+        <p id="kpiSeguroTotalSub" class="text-[11px] text-zinc-500 mt-1 tabular-nums">Total seguro (12m): Gs. 188.040</p>
+      </div>
+
+      <!-- KPI 4: Total General a Pagar al Finalizar (Acento Carbón #18181B) -->
+      <div class="bg-[#18181B] rounded-2xl p-4 sm:p-5 border border-zinc-800 border-t-4 border-t-[#18181B] text-white shadow-xs relative overflow-hidden">
+        <div class="flex items-center justify-between">
+          <p class="text-xs font-bold uppercase tracking-wider text-zinc-300">Total General a Pagar</p>
+          <span class="w-8 h-8 rounded-lg bg-white/10 text-[#F7D100] flex items-center justify-center">
+            <i data-lucide="calculator" class="w-4 h-4"></i>
+          </span>
+        </div>
+        <p id="kpiTotalPagar" class="text-2xl font-extrabold text-white mt-2 tabular-nums tracking-tight">Gs. 11.879.184</p>
+        <p id="kpiTotalDesglose" class="text-[11px] text-zinc-400 mt-1 tabular-nums">Cap: Gs. 10.000.000 + Int/Gastos: Gs. 1.879.184</p>
+      </div>
+    </section>
+
+    <!-- Sección Vista Previa del Cuotero -->
+    <section class="bg-white rounded-2xl shadow-xs border border-[#E4E4E7] overflow-hidden">
+      <div class="p-5 sm:p-6 border-b border-[#E4E4E7] flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div class="flex items-center gap-2.5">
+          <span class="w-7 h-7 rounded-lg bg-[#FEFCE8] text-[#D97706] font-bold text-xs flex items-center justify-center border border-[#FEF08A]">3</span>
+          <div>
+            <h2 class="text-base font-bold text-[#18181B]">Vista Previa del Cuotero</h2>
+            <p class="text-xs text-zinc-500">Tabla de amortización detallada según el Método Francés, Gastos Adm. y Seguro</p>
+          </div>
+        </div>
+
+        <!-- Selector de Modo de Tabla -->
+        <div class="inline-flex p-1 rounded-xl bg-[#F5F5F6] border border-[#E4E4E7] self-start md:self-auto">
+          <button type="button" id="btnViewCommercial"
+            class="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-[#18181B] text-white shadow-xs transition cursor-pointer">
+            Vista Comercial (Cliente)
+          </button>
+          <button type="button" id="btnViewAnalytical"
+            class="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-zinc-600 hover:text-[#18181B] transition cursor-pointer">
+            Vista Analítica Completa (Columnas Excel)
+          </button>
+        </div>
+      </div>
+
+      <!-- Contenedor Responsivo de la Tabla del Cuotero -->
+      <div class="overflow-x-auto custom-scrollbar">
+        <table class="w-full text-left border-collapse">
+          <thead id="cuoteroThead" class="bg-[#F5F5F6] border-b-2 border-[#D11D27] text-[11px] font-bold uppercase tracking-wider text-[#18181B]">
+            <!-- Generado dinámicamente según vista seleccionada -->
+          </thead>
+          <tbody id="cuoteroTbody" class="divide-y divide-[#E4E4E7] text-xs text-[#18181B] tabular-nums">
+            <!-- Filas generadas dinámicamente -->
+          </tbody>
+          <tfoot id="cuoteroTfoot" class="bg-[#18181B] text-white text-xs font-bold tabular-nums">
+            <!-- Totales generados dinámicamente -->
+          </tfoot>
+        </table>
+      </div>
+    </section>
+
+    <!-- Sección Inferior: Proformas Guardadas en SQLite (CRUD Completo) -->
+    <section class="bg-white rounded-2xl shadow-xs border border-[#E4E4E7] overflow-hidden">
+      <div class="p-5 sm:p-6 border-b border-[#E4E4E7] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div class="flex items-center gap-2.5">
+          <span class="w-7 h-7 rounded-lg bg-[#18181B] text-white font-bold text-xs flex items-center justify-center">4</span>
+          <div>
+            <div class="flex items-center gap-2">
+              <h2 class="text-base font-bold text-[#18181B]">Proformas Guardadas en SQLite</h2>
+              <span id="savedCountBadge" class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#FEF2F2] text-[#D11D27] border border-[#FEE2E2]">0</span>
+            </div>
+            <p class="text-xs text-zinc-500">Historial almacenado localmente con opciones de edición, exportación PDF y eliminación</p>
+          </div>
+        </div>
+
+        <!-- Buscador en Tiempo Real por Cliente, C.I., Teléfono o ID -->
+        <div class="relative w-full sm:w-80">
+          <i data-lucide="search" class="w-4 h-4 text-zinc-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+          <input type="text" id="searchProformas" placeholder="Buscar por cliente, C.I., teléfono o N° de operación..."
+            class="w-full pl-9 pr-3.5 py-2 rounded-xl border border-zinc-300 text-xs text-[#18181B] placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#D11D27]/25 focus:border-[#D11D27] transition" />
+        </div>
+      </div>
+
+      <div class="overflow-x-auto custom-scrollbar">
+        <table class="w-full text-left border-collapse">
+          <thead class="bg-[#F5F5F6] border-b border-[#E4E4E7] text-[11px] font-bold uppercase tracking-wider text-[#18181B]">
+            <tr>
+              <th class="py-3 px-4">N° Operación</th>
+              <th class="py-3 px-4">Fecha</th>
+              <th class="py-3 px-4">Cliente / Documento</th>
+              <th class="py-3 px-4">Teléfono</th>
+              <th class="py-3 px-4 text-right">Capital</th>
+              <th class="py-3 px-4 text-center">Cuotas / TEA</th>
+              <th class="py-3 px-4 text-right">Cuota Mensual</th>
+              <th class="py-3 px-4 text-right">Total a Pagar</th>
+              <th class="py-3 px-4 text-center">Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="savedProformasTbody" class="divide-y divide-[#E4E4E7] text-xs text-[#18181B]">
+            <!-- Filas renderizadas desde SQLite -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <!-- Pie de Página Institucional Oscuro con Logo Oficial Fundación Industrial -->
+  <footer class="bg-[#18181B] text-white border-t border-zinc-800 mt-10">
+    <div class="max-w-7xl mx-auto py-5 px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <svg class="h-8 w-auto" viewBox="0 0 390 160" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="fiLogoTitleFooter">
+          <title id="fiLogoTitleFooter">Fundación Industrial</title>
+          <path d="M72 36 L26 82 L88 144" stroke="#D11D27" stroke-width="15" stroke-linecap="round" stroke-linejoin="round" />
+          <path d="M57 113 L93 77" stroke="#D11D27" stroke-width="15" stroke-linecap="round" />
+          <path d="M55.5 83.5 L121.5 17.5" stroke="#F7D100" stroke-width="15" stroke-linecap="round" />
+          <path d="M89.5 17.5 L121.5 17.5 L121.5 49.5" stroke="#F7D100" stroke-width="15" stroke-linecap="round" stroke-linejoin="round" />
+          <path d="M85.5 115.5 L108.5 92.5" stroke="#F16522" stroke-width="15" stroke-linecap="round" />
+          <text x="148" y="74" fill="#FFFFFF" class="logo-wordmark" font-size="31">FUNDACIÓN</text>
+          <text x="148" y="112" fill="#FFFFFF" class="logo-wordmark" font-size="31">INDUSTRIAL</text>
+        </svg>
+      </div>
+      <p class="text-xs text-zinc-400 text-center sm:text-right">
+        RUC: 80011774-3 · Casa Matriz: Senador Long N°625 c/ Lillo · Tel.: (021) 605 700
+      </p>
+    </div>
+    <!-- Micro-barra tricolor inferior -->
+    <div class="w-full h-1 flex">
+      <div class="w-1/2 bg-[#D11D27]"></div>
+      <div class="w-1/4 bg-[#F7D100]"></div>
+      <div class="w-1/4 bg-[#F16522]"></div>
+    </div>
+  </footer>
+
+  <!-- Modal de Confirmación Personalizado (Sin confirm() nativo) -->
+  <div id="confirmModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-[#18181B]/60 backdrop-blur-xs p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-[#E4E4E7] transform transition-all">
+      <div class="flex items-start gap-3.5">
+        <div class="w-10 h-10 rounded-xl bg-[#FEF2F2] text-[#D11D27] flex items-center justify-center shrink-0">
+          <i data-lucide="trash-2" class="w-5 h-5"></i>
+        </div>
+        <div>
+          <h3 class="text-base font-bold text-[#18181B]">Eliminar Proforma</h3>
+          <p id="confirmModalMessage" class="text-xs text-zinc-600 mt-1 leading-relaxed">
+            ¿Estás seguro de que deseas eliminar este registro de la base de datos SQLite? Esta acción no se puede deshacer.
+          </p>
+        </div>
+      </div>
+      <div class="mt-6 flex justify-end gap-2.5">
+        <button type="button" id="btnCancelDelete" class="px-4 py-2 rounded-xl text-xs font-semibold text-[#18181B] bg-[#F5F5F6] hover:bg-zinc-200 border border-[#E4E4E7] transition cursor-pointer">
+          Cancelar
+        </button>
+        <button type="button" id="btnConfirmDelete" class="px-4 py-2 rounded-xl text-xs font-semibold text-white bg-[#D11D27] hover:bg-[#B0151E] transition cursor-pointer">
+          Sí, Eliminar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Contenedor de Notificaciones Toast -->
+  <div id="toastContainer" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none px-4 sm:px-0"></div>
+
+  <!-- Lógica Completa de la Aplicación -->
+  <script>
+    /**
+     * ============================================================================
+     * FUNDACIÓN INDUSTRIAL — SISTEMA DE CÁLCULO DE PROFORMAS
+     * Método Francés (Gastos Administrativos y Seguro Nivelado)
+     * ============================================================================
+     */
+
+    const AppState = {
+      db: null,
+      SQL: null,
+      isSqliteReady: false,
+      editingId: null,
+      pendingDeleteId: null,
+      manualWeekendShift: null,
+      viewMode: 'commercial', // 'commercial' | 'analytical'
+      currentCalculation: null,
+      storageKeySqlite: 'fundacion_industrial_proformas_sqlite',
+      storageKeyFallback: 'fundacion_industrial_proformas_fallback_json'
+    };
+
+    // ============================================================================
+    // 1. UTILIDADES DE FORMATEO Y MÁSCARAS DE ENTRADA EN TIEMPO REAL
+    // ============================================================================
+
+    function parseMonto(value) {
+      if (typeof value === 'number') return isFinite(value) ? value : 0;
+      const digits = String(value || '').replace(/\D/g, '');
+      return digits ? parseInt(digits, 10) : 0;
+    }
+
+    function formatIntegerDots(value) {
+      const digits = String(value ?? '').replace(/\D/g, '');
+      if (!digits) return '';
+      const normalized = String(parseInt(digits, 10));
+      return normalized.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    }
+
+    function formatGs(amount, decimals = 0) {
+      const val = Number(amount) || 0;
+      if (decimals === 0) {
+        return 'Gs. ' + Math.round(val).toLocaleString('es-PY');
+      }
+      return 'Gs. ' + val.toLocaleString('es-PY', {
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals
+      });
+    }
+
+    function formatDecimal(amount, decimals = 2) {
+      const val = Number(amount) || 0;
+      return val.toLocaleString('es-PY', {
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals
+      });
+    }
+
+    /**
+     * Formatea Cédula de Identidad (4.567.890), RUC con DV (4.567.890-1)
+     * o Pasaporte alfanumérico (AB123456).
+     */
+    function formatDocumentoCI(rawValue) {
+      const str = String(rawValue || '').trim();
+      if (!str) return '';
+
+      if (/[A-Za-z]/.test(str)) {
+        return str.replace(/[^A-Za-z0-9-]/g, '').toUpperCase();
+      }
+
+      if (str.includes('-')) {
+        const parts = str.split('-');
+        const bodyFormatted = formatIntegerDots(parts[0]);
+        const dv = (parts[1] || '').replace(/\D/g, '').slice(0, 1);
+        if (!bodyFormatted) return '';
+        return `${bodyFormatted}-${dv}`;
+      }
+
+      return formatIntegerDots(str);
+    }
+
+    /**
+     * Aplica máscara de miles en tiempo real preservando la posición del cursor.
+     */
+    function applyCurrencyMask(inputEl) {
+      const rawValue = inputEl.value;
+      const selectionStart = inputEl.selectionStart ?? rawValue.length;
+      const digitsBeforeCursor = rawValue.slice(0, selectionStart).replace(/\D/g, '').length;
+
+      const formatted = formatIntegerDots(rawValue);
+      inputEl.value = formatted;
+
+      if (document.activeElement === inputEl) {
+        let newCursor = 0;
+        let seenDigits = 0;
+        while (newCursor < formatted.length && seenDigits < digitsBeforeCursor) {
+          if (/\d/.test(formatted[newCursor])) {
+            seenDigits++;
+          }
+          newCursor++;
+        }
+        inputEl.setSelectionRange(newCursor, newCursor);
+      }
+    }
+
+    /**
+     * Aplica máscara de C.I. / RUC en tiempo real preservando la posición del cursor.
+     */
+    function applyDocumentoMask(inputEl) {
+      const rawValue = inputEl.value;
+      const selectionStart = inputEl.selectionStart ?? rawValue.length;
+
+      if (/[A-Za-z]/.test(rawValue)) {
+        const cleaned = rawValue.replace(/[^A-Za-z0-9-]/g, '').toUpperCase();
+        inputEl.value = cleaned;
+        return;
+      }
+
+      const significantBefore = rawValue.slice(0, selectionStart).replace(/[^0-9-]/g, '').length;
+      const formatted = formatDocumentoCI(rawValue);
+      inputEl.value = formatted;
+
+      if (document.activeElement === inputEl) {
+        let newCursor = 0;
+        let seen = 0;
+        while (newCursor < formatted.length && seen < significantBefore) {
+          if (/[0-9-]/.test(formatted[newCursor])) {
+            seen++;
+          }
+          newCursor++;
+        }
+        inputEl.setSelectionRange(newCursor, newCursor);
+      }
+    }
+
+    function getCurrentFormattedDate() {
+      const now = new Date();
+      const pad = n => String(n).padStart(2, '0');
+      return `${pad(now.getDate())}/${pad(now.getMonth() + 1)}/${now.getFullYear()} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+    }
+
+    function getTodayISO() {
+      const now = new Date();
+      const pad = n => String(n).padStart(2, '0');
+      return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+    }
+
+    // ============================================================================
+    // FECHAS (días hábiles: sábado y domingo se trasladan al lunes)
+    // ============================================================================
+
+    function parseISODateLocal(isoStr) {
+      if (!isoStr || !/^\d{4}-\d{2}-\d{2}$/.test(isoStr)) return new Date();
+      const [y, m, d] = isoStr.split('-').map(Number);
+      return new Date(y, m - 1, d);
+    }
+
+    function formatDateShort(dateObj) {
+      const dd = String(dateObj.getDate()).padStart(2, '0');
+      const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+      const yyyy = dateObj.getFullYear();
+      return `${dd}/${mm}/${yyyy}`;
+    }
+
+    function formatDateISO(dateObj) {
+      const ry = dateObj.getFullYear();
+      const rm = String(dateObj.getMonth() + 1).padStart(2, '0');
+      const rd = String(dateObj.getDate()).padStart(2, '0');
+      return `${ry}-${rm}-${rd}`;
+    }
+
+    function formatISODateToDMY(isoStr) {
+      if (!isoStr) return '-';
+      const d = parseISODateLocal(isoStr);
+      return formatDateShort(d);
+    }
+
+    function addMonthsRaw(baseDate, monthsToAdd) {
+      const y = baseDate.getFullYear();
+      const m = baseDate.getMonth() + monthsToAdd;
+      const d = baseDate.getDate();
+      const target = new Date(y, m, 1);
+      const maxDay = new Date(target.getFullYear(), target.getMonth() + 1, 0).getDate();
+      target.setDate(Math.min(d, maxDay));
+      return target;
+    }
+
+    function adjustToNextBusinessDay(dateObj) {
+      const target = new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate());
+      const dow = target.getDay();
+      if (dow === 6) target.setDate(target.getDate() + 2);
+      else if (dow === 0) target.setDate(target.getDate() + 1);
+      return target;
+    }
+
+    function getNextMonthDateISO(isoStr) {
+      const base = parseISODateLocal(isoStr);
+      const nominalNext = addMonthsRaw(base, 1);
+      const businessNext = adjustToNextBusinessDay(nominalNext);
+      return formatDateISO(businessNext);
+    }
+
+    function addMonthsWithBusinessAdjust(baseDate, monthsToAdd) {
+      return adjustToNextBusinessDay(addMonthsRaw(baseDate, monthsToAdd));
+    }
+
+    function daysBetweenDates(d1, d2) {
+      const utc1 = Date.UTC(d1.getFullYear(), d1.getMonth(), d1.getDate());
+      const utc2 = Date.UTC(d2.getFullYear(), d2.getMonth(), d2.getDate());
+      return Math.max(0, Math.round((utc2 - utc1) / 86400000));
+    }
+
+    // ============================================================================
+    // REGLAS DE NEGOCIO (mismas que el sistema de gestión)
+    // ============================================================================
+    // Regla legado: si el 1er vencimiento se modifica a una fecha posterior a la habitual, se cobran los
+    // meses completos hasta esa fecha + 1 mes extra, sobre el crédito total (capital + gastos).
+    const LEGACY_MES_EXTRA_PRIMER_VTO = true;
+
+    // T.A.E.: tasa anual que iguala lo que recibe el cliente con lo que paga (cuotas en sus fechas reales, act/365).
+    const TAE_CONFIG = { incluirIVA: true, incluirGastos: true, incluirSeguro: true, baseDias: 365 };
+
+
+    function computeTAE(capital, dDesembolso, pagos) {
+      if (!(capital > 0) || !pagos.length) return 0;
+      const t = pagos.map(p => daysBetweenDates(dDesembolso, p.fecha) / TAE_CONFIG.baseDias);
+      const pv = r => pagos.reduce((acc, p, i) => acc + p.monto / Math.pow(1 + r, t[i]), 0) - capital;
+      if (pv(0) <= 0) return 0;
+      let lo = 0;
+      let hi = 10;
+      for (let iter = 0; iter < 100; iter++) {
+        const mid = (lo + hi) / 2;
+        if (pv(mid) > 0) lo = mid;   // el VP de los pagos supera lo recibido: la tasa de prueba es baja
+        else hi = mid;
+      }
+      return ((lo + hi) / 2) * 100;
+    }
+
+    function formatPlainNumber(val, decimals = 0) {
+      const num = Number(val) || 0;
+      const fixed = num.toFixed(decimals);
+      const [intPart, decPart] = fixed.split('.');
+      const formattedInt = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+      return decimals === 0 ? formattedInt : `${formattedInt},${decPart}`;
+    }
+
+    function getFormParameters() {
+      const fechaDesembolso = document.getElementById('fechaDesembolso').value || getTodayISO();
+      const primerVencimiento = document.getElementById('primerVencimiento').value || getNextMonthDateISO(fechaDesembolso);
+      return {
+        capital: Math.max(0, parseMonto(document.getElementById('capital').value)),
+        tasaAnual: Math.max(0, parseFloat(document.getElementById('tasaAnual').value) || 0),
+        plazoMeses: Math.max(1, Math.min(240, parseInt(document.getElementById('plazoMeses').value, 10) || 12)),
+        pctGastos: Math.max(0, parseFloat(document.getElementById('pctGastos').value) || 0),
+        tasaSeguro: Math.max(0, parseFloat(document.getElementById('tasaSeguro').value) || 0),
+        ivaPct: Math.max(0, parseFloat(document.getElementById('ivaPct').value) || 0),
+        redondear: document.getElementById('modoRedondeo').value === '1',
+        fechaDesembolso,
+        primerVencimiento
+      };
+    }
+
+
+    function calculateProforma(params) {
+      const {
+        capital,
+        tasaAnual,
+        plazoMeses: n,
+        pctGastos,
+        tasaSeguro,
+        ivaPct,
+        redondear,
+        fechaDesembolso,
+        primerVencimiento
+      } = params;
+
+      const ivaRate = ivaPct / 100;
+      const iMensual = (tasaAnual / 100) / 12;
+      const iMensualIva = iMensual * (1 + ivaRate);
+      const tasaAnualIva = tasaAnual * (1 + ivaRate);
+
+      let cuotaSinGastoExacta = 0;
+      if (capital > 0) {
+        if (iMensualIva > 0) {
+          const factor = Math.pow(1 + iMensualIva, n);
+          cuotaSinGastoExacta = capital * ((iMensualIva * factor) / (factor - 1));
+        } else {
+          cuotaSinGastoExacta = capital / n;
+        }
+      }
+
+      const gAdmBase = capital * (pctGastos / 100);
+      const gAdmIva = gAdmBase * ivaRate;
+      const gAdmTotal = gAdmBase + gAdmIva;
+      const gAdmMensualExacta = gAdmTotal / n;
+
+      const dDesembolso = parseISODateLocal(fechaDesembolso);
+      const dPrimerVtoRaw = parseISODateLocal(primerVencimiento);
+      const dPrimerVtoHabil = dPrimerVtoRaw < dDesembolso
+        ? adjustToNextBusinessDay(dDesembolso)
+        : adjustToNextBusinessDay(dPrimerVtoRaw);
+
+      // Determinar fecha ancla mensual y días trasladados por fin de semana (sin cobro de interés)
+      const dNominal1M = addMonthsRaw(dDesembolso, 1);
+      const dHabil1M = adjustToNextBusinessDay(dNominal1M);
+      const primerVtoHabilISO = formatDateISO(dPrimerVtoHabil);
+
+      let dAnchor = dPrimerVtoRaw < dDesembolso ? dDesembolso : dPrimerVtoRaw;
+      let diasTrasladoFinDeSemana = daysBetweenDates(dAnchor, dPrimerVtoHabil);
+      if (primerVtoHabilISO === formatDateISO(dHabil1M)) {
+        dAnchor = dNominal1M;
+        diasTrasladoFinDeSemana = daysBetweenDates(dNominal1M, dHabil1M);
+      } else if (
+        AppState.manualWeekendShift &&
+        AppState.manualWeekendShift.shiftedISO === primerVtoHabilISO
+      ) {
+        dAnchor = parseISODateLocal(AppState.manualWeekendShift.nominalISO);
+        diasTrasladoFinDeSemana = AppState.manualWeekendShift.shiftDays;
+      }
+
+      const diasPrimerVto = daysBetweenDates(dDesembolso, dPrimerVtoHabil);
+      const diasComputablesInteres = Math.max(0, diasPrimerVto - diasTrasladoFinDeSemana);
+      const diasExcedentes = Math.max(0, diasComputablesInteres - 30);
+
+      // REGLA LEGADO: 1er vencimiento modificado -> meses completos + 1 mes extra, sobre capital + gastos
+      const primerVtoModificado = LEGACY_MES_EXTRA_PRIMER_VTO &&
+        diasExcedentes > 0 &&
+        primerVencimiento > getNextMonthDateISO(fechaDesembolso);
+      const baseCreditoExacta = capital + gAdmTotal;
+      let mesesInteresPrimerPeriodo = 1;
+      if (primerVtoModificado) {
+        let mesesCompletos = 0;
+        while (addMonthsRaw(dDesembolso, mesesCompletos + 1) <= dAnchor) mesesCompletos++;
+        mesesInteresPrimerPeriodo = mesesCompletos + 1;
+      }
+
+      const interesDiasExtraBaseTotal = primerVtoModificado
+        ? iMensual * (baseCreditoExacta * mesesInteresPrimerPeriodo - capital)
+        : (diasExcedentes > 0 ? capital * (iMensual / 30) * diasExcedentes : 0);
+      const ivaDiasExtraTotal = interesDiasExtraBaseTotal * ivaRate;
+      const totalDiasExtra = interesDiasExtraBaseTotal + ivaDiasExtraTotal;
+      const extraBasePorCuotaExacta = interesDiasExtraBaseTotal / n;
+      const extraTotalPorCuotaExacta = totalDiasExtra / n;
+
+      let saldoCapExacto = capital;
+      const segRate = tasaSeguro / 100;
+      let sumSegConIva = ((primerVtoModificado ? baseCreditoExacta : saldoCapExacto) * segRate) * (1 + ivaRate);
+
+      for (let k = 1; k <= n; k++) {
+        const intK = saldoCapExacto * iMensual;
+        const ivaIntK = intK * ivaRate;
+        const amortCapK = Math.min(saldoCapExacto, Math.max(0, cuotaSinGastoExacta - intK - ivaIntK));
+        saldoCapExacto = Math.max(0, saldoCapExacto - amortCapK);
+        if (k < n) {
+          sumSegConIva += (saldoCapExacto * segRate) * (1 + ivaRate);
+        }
+      }
+
+      const seguroNiveladoExacto = sumSegConIva / n;
+      let seguroNivelado;
+      if (!redondear) {
+        seguroNivelado = Number(seguroNiveladoExacto.toFixed(2));
+      } else if (primerVtoModificado) {
+        const segSinIva = Math.round(seguroNiveladoExacto / (1 + ivaRate));
+        seguroNivelado = segSinIva + Math.round(segSinIva * ivaRate);
+      } else {
+        seguroNivelado = Math.round(seguroNiveladoExacto);
+      }
+      const gAdmMensual = redondear ? Math.round(gAdmMensualExacta) : Number(gAdmMensualExacta.toFixed(2));
+      const extraTotalCuota = redondear ? Math.round(extraTotalPorCuotaExacta) : Number(extraTotalPorCuotaExacta.toFixed(2));
+
+      const cuotaBaseGastosExacta = cuotaSinGastoExacta + gAdmMensualExacta + extraTotalPorCuotaExacta;
+      let cuotaBaseGastos = redondear ? Math.round(cuotaBaseGastosExacta) : Number(cuotaBaseGastosExacta.toFixed(2));
+      let cuotaFinalReferencia = redondear
+        ? Math.round(cuotaSinGastoExacta + gAdmMensualExacta + extraTotalPorCuotaExacta + seguroNiveladoExacto)
+        : Number((cuotaBaseGastosExacta + seguroNiveladoExacto).toFixed(2));
+
+      // Modo legado: el crédito total (capital + gastos) se redondea al millar en la cuota (28.953.769 -> 28.954.000)
+      const creditoTotalRedondeado = Math.round(capital + gAdmTotal);
+      const ajusteRedondeoCredito = (primerVtoModificado && redondear)
+        ? Math.round(creditoTotalRedondeado / 1000) * 1000 - creditoTotalRedondeado
+        : 0;
+
+      const schedule = [];
+      let saldoCap = capital;
+      let saldoGAdm = redondear ? Math.round(gAdmTotal) : Number(gAdmTotal.toFixed(2));
+      let prevFecha = dDesembolso;
+
+      let totAmortCapital = 0;
+      let totGAdm = 0;
+      let totAmortTotal = 0;
+      let totInteres = 0;
+      let totIva = 0;
+      let totExtraDias = 0;
+      let totBaseGastos = 0;
+      let totSeguro = 0;
+      let totCuotaFinal = 0;
+
+      for (let k = 1; k <= n; k++) {
+        const fechaVto = k === 1
+          ? new Date(dPrimerVtoHabil.getTime())
+          : addMonthsWithBusinessAdjust(dAnchor, k - 1);
+        const diasPeriodo = daysBetweenDates(prevFecha, fechaVto);
+        prevFecha = fechaVto;
+
+        const saldoInicial = saldoCap;
+        const intBaseRaw = saldoInicial * iMensual;
+        const extraBaseRaw = extraBasePorCuotaExacta;
+        let interes = redondear ? Math.round(intBaseRaw + extraBaseRaw) : Number((intBaseRaw + extraBaseRaw).toFixed(2));
+
+        const ivaRaw = (intBaseRaw + extraBaseRaw) * ivaRate;
+        const iva = redondear ? Math.round(ivaRaw) : Number(ivaRaw.toFixed(2));
+
+        const extraCuota = redondear ? extraTotalCuota : Number(extraTotalPorCuotaExacta.toFixed(2));
+
+        let gAdmCuota = k < n
+          ? gAdmMensual
+          : (redondear ? Math.max(0, Math.round(saldoGAdm)) : Number(Math.max(0, saldoGAdm).toFixed(2)));
+        saldoGAdm = Math.max(0, saldoGAdm - gAdmCuota);
+
+        const segCuota = seguroNivelado;
+
+        let amortCapital = 0;
+        let cuotaFinal = 0;
+
+        if (k < n) {
+          cuotaFinal = cuotaFinalReferencia;
+          const disponibleCap = cuotaFinal - segCuota - gAdmCuota - interes - iva;
+          amortCapital = redondear
+            ? Math.max(0, Math.min(saldoInicial, Math.round(disponibleCap)))
+            : Number(Math.max(0, Math.min(saldoInicial, disponibleCap)).toFixed(2));
+        } else {
+          amortCapital = (redondear ? Math.round(saldoInicial) : Number(saldoInicial.toFixed(2))) + ajusteRedondeoCredito;
+          cuotaFinal = redondear
+            ? Math.round(amortCapital + gAdmCuota + interes + iva + segCuota)
+            : Number((amortCapital + gAdmCuota + interes + iva + segCuota).toFixed(2));
+          // Cuadre: todas las cuotas iguales. El residuo de redondeo (unos pocos Gs) se absorbe en el interés
+          // de la última cuota para que su total coincida con la cuota de referencia; el saldo sigue cerrando en 0.
+          const residuo = cuotaFinalReferencia - cuotaFinal;
+          if (n > 1 && residuo !== 0 && Math.abs(residuo) <= Math.max(5, cuotaFinalReferencia * 0.005)) {
+            interes = redondear ? Math.round(interes + residuo) : Number((interes + residuo).toFixed(2));
+            cuotaFinal = cuotaFinalReferencia;
+          }
+        }
+
+        const saldoFinal = redondear
+          ? Math.max(0, Math.round(saldoInicial - amortCapital))
+          : Number(Math.max(0, saldoInicial - amortCapital).toFixed(2));
+
+        const amortTotal = redondear
+          ? Math.round(amortCapital + gAdmCuota)
+          : Number((amortCapital + gAdmCuota).toFixed(2));
+
+        const cuotaBaseGastosRow = redondear
+          ? Math.round(cuotaFinal - segCuota)
+          : Number((cuotaFinal - segCuota).toFixed(2));
+
+        saldoCap = saldoFinal;
+
+        totAmortCapital += amortCapital;
+        totGAdm += gAdmCuota;
+        totAmortTotal += amortTotal;
+        totInteres += interes;
+        totIva += iva;
+        totExtraDias += extraCuota;
+        totBaseGastos += cuotaBaseGastosRow;
+        totSeguro += segCuota;
+        totCuotaFinal += cuotaFinal;
+
+        schedule.push({
+          cuota: k,
+          fechaVtoObj: fechaVto,
+          vencimiento: formatDateShort(fechaVto),
+          dias: diasPeriodo,
+          saldoInicial,
+          amortCapital,
+          gAdmCuota,
+          amortTotal,
+          interes,
+          iva,
+          extraDias: extraCuota,
+          cuotaBaseGastos: cuotaBaseGastosRow,
+          seguro: segCuota,
+          cuotaFinal,
+          saldoFinal
+        });
+      }
+
+      const ultimoVtoDate = schedule.length > 0
+        ? schedule[schedule.length - 1].fechaVtoObj
+        : dPrimerVtoHabil;
+      const plazoDiasTotal = daysBetweenDates(dDesembolso, ultimoVtoDate);
+
+      if (n === 1 && schedule.length === 1) {
+        cuotaFinalReferencia = schedule[0].cuotaFinal;
+        cuotaBaseGastos = schedule[0].cuotaBaseGastos;
+      }
+
+      const taeAnual = computeTAE(capital, dDesembolso, schedule.map(r => ({
+        fecha: r.fechaVtoObj,
+        monto: r.amortCapital + r.interes
+          + (TAE_CONFIG.incluirGastos ? r.gAdmCuota : 0)
+          + (TAE_CONFIG.incluirIVA ? r.iva : 0)
+          + (TAE_CONFIG.incluirSeguro ? r.seguro : 0)
+      })));
+
+      return {
+        params,
+        iMensualPct: iMensual * 100,
+        iMensualIvaPct: iMensualIva * 100,
+        taeAnualPct: taeAnual,
+        tasaAnualIvaPct: tasaAnualIva,
+        diasPrimerVto,
+        diasTrasladoFinDeSemana,
+        diasExcedentes,
+        primerVtoModificado,
+        mesesInteresPrimerPeriodo,
+        interesDiasExtraBaseTotal,
+        totalDiasExtra,
+        extraTotalCuota,
+        plazoDiasTotal,
+        gAdmBase: redondear ? Math.round(gAdmBase) : Number(gAdmBase.toFixed(2)),
+        gAdmIva: redondear ? Math.round(gAdmIva) : Number(gAdmIva.toFixed(2)),
+        gAdmTotal: redondear ? Math.round(gAdmTotal) : Number(gAdmTotal.toFixed(2)),
+        gAdmMensual,
+        seguroNivelado,
+        cuotaBaseGastos,
+        cuotaFinalReferencia,
+        schedule,
+        totals: {
+          amortCapital: totAmortCapital,
+          gAdm: totGAdm,
+          amortTotal: totAmortTotal,
+          interes: totInteres,
+          iva: totIva,
+          extraDias: totExtraDias,
+          baseGastos: totBaseGastos,
+          seguro: totSeguro,
+          cuotaFinal: totCuotaFinal
+        }
+      };
+    }
+
+    function updateUIAndCalculate() {
+      const params = getFormParameters();
+      const calc = calculateProforma(params);
+      AppState.currentCalculation = calc;
+      const dec = params.redondear ? 0 : 2;
+
+      document.getElementById('capitalFormattedHint').textContent = formatGs(params.capital, 0);
+      document.getElementById('lblIvaRef').textContent = params.ivaPct;
+      document.getElementById('lblTaeAnual').textContent = `${calc.taeAnualPct.toFixed(2).replace('.', ',')}%`;
+      document.getElementById('lblTasaAnualIva').textContent = `${calc.tasaAnualIvaPct.toFixed(2).replace('.', ',')}%`;
+      document.getElementById('lblTasaMensual').textContent = `${calc.iMensualPct.toFixed(4).replace('.', ',')}%`;
+      document.getElementById('lblTasaMensualIva').textContent = `${calc.iMensualIvaPct.toFixed(4).replace('.', ',')}%`;
+
+      document.getElementById('lblPlazoDias').textContent = `${calc.plazoDiasTotal} días`;
+      document.getElementById('lblDiasPrimerVto').textContent = calc.diasTrasladoFinDeSemana > 0
+        ? `${calc.diasPrimerVto} días (${calc.diasTrasladoFinDeSemana}d traslado hábil)`
+        : `${calc.diasPrimerVto} días`;
+
+      const extraBadge = document.getElementById('lblInteresDiasExtraBadge');
+      if (calc.primerVtoModificado) {
+        extraBadge.textContent = `1er vto modificado: ${calc.mesesInteresPrimerPeriodo} meses de interés (regla legado)`;
+        extraBadge.className = 'font-bold text-[#D11D27]';
+      } else if (calc.diasExcedentes > 0) {
+        extraBadge.textContent = `+${calc.diasExcedentes}d extra: ${formatGs(calc.extraTotalCuota, dec)}/cuota`;
+        extraBadge.className = 'font-bold text-[#D11D27]';
+      } else if (calc.diasTrasladoFinDeSemana > 0) {
+        extraBadge.textContent = 'Sin recargo (traslado día hábil)';
+        extraBadge.className = 'font-semibold text-emerald-700';
+      } else {
+        extraBadge.textContent = 'Sin recargo (≤ 30d)';
+        extraBadge.className = 'font-semibold text-zinc-500';
+      }
+
+      document.getElementById('lblGAdmTotal').textContent = formatGs(calc.gAdmTotal, dec);
+      document.getElementById('lblGAdmMensual').textContent = `${formatGs(calc.gAdmMensual, dec)}/mes`;
+      document.getElementById('lblSeguroNiveladoPreview').textContent = `Seguro igual: ${formatGs(calc.seguroNivelado, dec)} / mes`;
+
+      document.getElementById('kpiCuotaFinal').textContent = formatGs(calc.cuotaFinalReferencia, dec);
+      document.getElementById('kpiCuotaSub').textContent = `${params.plazoMeses} cuotas mensuales · 1er Vto: ${formatISODateToDMY(params.primerVencimiento)}`;
+
+      document.getElementById('kpiCuotaBaseGastos').textContent = formatGs(calc.cuotaBaseGastos, dec);
+      document.getElementById('kpiCuotaBaseGastosSub').textContent = `Incluye G. Adm. (${formatGs(calc.gAdmMensual, dec)}/mes)`;
+
+      document.getElementById('kpiSeguroNivelado').textContent = formatGs(calc.seguroNivelado, dec);
+      document.getElementById('kpiSeguroTotalSub').textContent = `Total seguro: ${formatGs(calc.totals.seguro, dec)}`;
+
+      document.getElementById('kpiTotalPagar').textContent = formatGs(calc.totals.cuotaFinal, dec);
+      document.getElementById('kpiTotalDesglose').textContent = `Int. + IVA: ${formatGs(calc.totals.interes + calc.totals.iva, dec)}`;
+
+      renderCuoteroTable();
+    }
+
+    function renderCuoteroTable() {
+      const calc = AppState.currentCalculation;
+      if (!calc) return;
+      const dec = calc.params.redondear ? 0 : 2;
+      const thead = document.getElementById('cuoteroThead');
+      const tbody = document.getElementById('cuoteroTbody');
+      const tfoot = document.getElementById('cuoteroTfoot');
+
+      if (AppState.viewMode === 'commercial') {
+        thead.innerHTML = `
+          <tr>
+            <th class="py-3 px-3 text-center">N°</th>
+            <th class="py-3 px-3 text-center">Vencimiento</th>
+            <th class="py-3 px-3 text-center">Días</th>
+            <th class="py-3 px-3 text-right">Saldo Inicial</th>
+            <th class="py-3 px-3 text-right">Amort. Capital</th>
+            <th class="py-3 px-3 text-right">Gastos Adm.</th>
+            <th class="py-3 px-3 text-right">Interés</th>
+            <th class="py-3 px-3 text-right">IVA (${calc.params.ivaPct}%)</th>
+            <th class="py-3 px-3 text-right">Seg. Vida</th>
+            <th class="py-3 px-3 text-right bg-[#FEF2F2] text-[#D11D27]">Cuota Final</th>
+            <th class="py-3 px-3 text-right">Saldo Final</th>
+          </tr>
+        `;
+
+        tbody.innerHTML = calc.schedule.map(r => `
+          <tr class="hover:bg-zinc-50 transition-colors">
+            <td class="py-2.5 px-3 text-center font-bold text-zinc-600">${r.cuota}</td>
+            <td class="py-2.5 px-3 text-center font-semibold text-zinc-700">${r.vencimiento}</td>
+            <td class="py-2.5 px-3 text-center text-zinc-500">${r.dias}</td>
+            <td class="py-2.5 px-3 text-right text-zinc-600">${formatPlainNumber(r.saldoInicial, dec)}</td>
+            <td class="py-2.5 px-3 text-right font-semibold text-zinc-800">${formatPlainNumber(r.amortCapital, dec)}</td>
+            <td class="py-2.5 px-3 text-right text-zinc-600">${formatPlainNumber(r.gAdmCuota, dec)}</td>
+            <td class="py-2.5 px-3 text-right text-zinc-700">${formatPlainNumber(r.interes, dec)}</td>
+            <td class="py-2.5 px-3 text-right text-zinc-500">${formatPlainNumber(r.iva, dec)}</td>
+            <td class="py-2.5 px-3 text-right text-zinc-700">${formatPlainNumber(r.seguro, dec)}</td>
+            <td class="py-2.5 px-3 text-right font-black text-[#D11D27] bg-[#FEF2F2]/60">${formatPlainNumber(r.cuotaFinal, dec)}</td>
+            <td class="py-2.5 px-3 text-right font-semibold text-zinc-800">${formatPlainNumber(r.saldoFinal, dec)}</td>
+          </tr>
+        `).join('');
+
+        tfoot.innerHTML = `
+          <tr>
+            <td colspan="4" class="py-3 px-3 text-left uppercase tracking-wider text-[#F7D100]">Totales Acumulados</td>
+            <td class="py-3 px-3 text-right">${formatPlainNumber(calc.totals.amortCapital, dec)}</td>
+            <td class="py-3 px-3 text-right">${formatPlainNumber(calc.totals.gAdm, dec)}</td>
+            <td class="py-3 px-3 text-right">${formatPlainNumber(calc.totals.interes, dec)}</td>
+            <td class="py-3 px-3 text-right">${formatPlainNumber(calc.totals.iva, dec)}</td>
+            <td class="py-3 px-3 text-right">${formatPlainNumber(calc.totals.seguro, dec)}</td>
+            <td class="py-3 px-3 text-right text-[#F7D100] font-black">${formatPlainNumber(calc.totals.cuotaFinal, dec)}</td>
+            <td class="py-3 px-3 text-right">0</td>
+          </tr>
+        `;
+      } else {
+        thead.innerHTML = `
+          <tr>
+            <th class="py-3 px-2.5 text-center">N°</th>
+            <th class="py-3 px-2.5 text-center">Vencimiento</th>
+            <th class="py-3 px-2.5 text-center">Días</th>
+            <th class="py-3 px-2.5 text-right">Saldo Ini.</th>
+            <th class="py-3 px-2.5 text-right">Amort. Cap.</th>
+            <th class="py-3 px-2.5 text-right">G. Adm.</th>
+            <th class="py-3 px-2.5 text-right">Amort. Total</th>
+            <th class="py-3 px-2.5 text-right">Interés</th>
+            <th class="py-3 px-2.5 text-right">IVA</th>
+            <th class="py-3 px-2.5 text-right">Int. Días Extra</th>
+            <th class="py-3 px-2.5 text-right">Base + G. Adm</th>
+            <th class="py-3 px-2.5 text-right">Seg. Nivelado</th>
+            <th class="py-3 px-2.5 text-right bg-[#FEF2F2] text-[#D11D27]">Cuota Final</th>
+            <th class="py-3 px-2.5 text-right">Saldo Fin.</th>
+          </tr>
+        `;
+
+        const rowZero = `
+          <tr class="bg-amber-50/50 text-zinc-600 font-semibold">
+            <td class="py-2 px-2.5 text-center">0</td>
+            <td class="py-2 px-2.5 text-center">${formatISODateToDMY(calc.params.fechaDesembolso)}</td>
+            <td class="py-2 px-2.5 text-center">-</td>
+            <td class="py-2 px-2.5 text-right">${formatPlainNumber(calc.params.capital, dec)}</td>
+            <td class="py-2 px-2.5 text-right">0</td>
+            <td class="py-2 px-2.5 text-right">${formatPlainNumber(calc.gAdmTotal, dec)}</td>
+            <td class="py-2 px-2.5 text-right">0</td>
+            <td class="py-2 px-2.5 text-right">0</td>
+            <td class="py-2 px-2.5 text-right">0</td>
+            <td class="py-2 px-2.5 text-right">0</td>
+            <td class="py-2 px-2.5 text-right">0</td>
+            <td class="py-2 px-2.5 text-right">0</td>
+            <td class="py-2 px-2.5 text-right">0</td>
+            <td class="py-2 px-2.5 text-right">${formatPlainNumber(calc.params.capital, dec)}</td>
+          </tr>
+        `;
+
+        tbody.innerHTML = rowZero + calc.schedule.map(r => `
+          <tr class="hover:bg-zinc-50 transition-colors">
+            <td class="py-2 px-2.5 text-center font-bold text-zinc-600">${r.cuota}</td>
+            <td class="py-2 px-2.5 text-center font-semibold text-zinc-700">${r.vencimiento}</td>
+            <td class="py-2 px-2.5 text-center text-zinc-500">${r.dias}</td>
+            <td class="py-2 px-2.5 text-right text-zinc-600">${formatPlainNumber(r.saldoInicial, dec)}</td>
+            <td class="py-2 px-2.5 text-right text-zinc-700">${formatPlainNumber(r.amortCapital, dec)}</td>
+            <td class="py-2 px-2.5 text-right text-zinc-600">${formatPlainNumber(r.gAdmCuota, dec)}</td>
+            <td class="py-2 px-2.5 text-right font-semibold text-zinc-800">${formatPlainNumber(r.amortTotal, dec)}</td>
+            <td class="py-2 px-2.5 text-right text-zinc-700">${formatPlainNumber(r.interes, dec)}</td>
+            <td class="py-2 px-2.5 text-right text-zinc-500">${formatPlainNumber(r.iva, dec)}</td>
+            <td class="py-2 px-2.5 text-right text-zinc-600">${formatPlainNumber(r.extraDias, dec)}</td>
+            <td class="py-2 px-2.5 text-right font-semibold text-[#F16522]">${formatPlainNumber(r.cuotaBaseGastos, dec)}</td>
+            <td class="py-2 px-2.5 text-right text-zinc-700">${formatPlainNumber(r.seguro, dec)}</td>
+            <td class="py-2 px-2.5 text-right font-black text-[#D11D27] bg-[#FEF2F2]/60">${formatPlainNumber(r.cuotaFinal, dec)}</td>
+            <td class="py-2 px-2.5 text-right font-semibold text-zinc-800">${formatPlainNumber(r.saldoFinal, dec)}</td>
+          </tr>
+        `).join('');
+
+        tfoot.innerHTML = `
+          <tr>
+            <td colspan="4" class="py-3 px-2.5 text-left uppercase tracking-wider text-[#F7D100]">Totales</td>
+            <td class="py-3 px-2.5 text-right">${formatPlainNumber(calc.totals.amortCapital, dec)}</td>
+            <td class="py-3 px-2.5 text-right">${formatPlainNumber(calc.totals.gAdm, dec)}</td>
+            <td class="py-3 px-2.5 text-right">${formatPlainNumber(calc.totals.amortTotal, dec)}</td>
+            <td class="py-3 px-2.5 text-right">${formatPlainNumber(calc.totals.interes, dec)}</td>
+            <td class="py-3 px-2.5 text-right">${formatPlainNumber(calc.totals.iva, dec)}</td>
+            <td class="py-3 px-2.5 text-right">${formatPlainNumber(calc.totals.extraDias, dec)}</td>
+            <td class="py-3 px-2.5 text-right">${formatPlainNumber(calc.totals.baseGastos, dec)}</td>
+            <td class="py-3 px-2.5 text-right">${formatPlainNumber(calc.totals.seguro, dec)}</td>
+            <td class="py-3 px-2.5 text-right text-[#F7D100] font-black">${formatPlainNumber(calc.totals.cuotaFinal, dec)}</td>
+            <td class="py-3 px-2.5 text-right">0</td>
+          </tr>
+        `;
+      }
+    }
+
+    // ============================================================================
+    // 4. BASE DE DATOS SQLITE EN NAVEGADOR (SQL.JS WASM + PERSISTENCIA LOCAL)
+    // ============================================================================
+
+    async function initDatabase() {
+      const statusDot = document.getElementById('dbStatusDot');
+      const statusText = document.getElementById('dbStatusText');
+
+      try {
+        if (typeof initSqlJs === 'undefined') {
+          throw new Error('SQL.js no disponible');
+        }
+
+        const SQL = await initSqlJs({
+          locateFile: file => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/${file}`
+        });
+        AppState.SQL = SQL;
+
+        const savedBase64 = localStorage.getItem(AppState.storageKeySqlite);
+        if (savedBase64) {
+          const binaryString = atob(savedBase64);
+          const bytes = new Uint8Array(binaryString.length);
+          for (let i = 0; i < binaryString.length; i++) {
+            bytes[i] = binaryString.charCodeAt(i);
+          }
+          AppState.db = new SQL.Database(bytes);
+        } else {
+          AppState.db = new SQL.Database();
+        }
+
+        // Crear tabla proformas si no existe
+        AppState.db.run(`
+          CREATE TABLE IF NOT EXISTS proformas (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            fecha_creacion TEXT NOT NULL,
+            fecha_actualizacion TEXT,
+            fecha_desembolso TEXT,
+            primer_vencimiento TEXT,
+            nombre_cliente TEXT NOT NULL,
+            documento TEXT NOT NULL,
+            telefono TEXT NOT NULL,
+            observaciones TEXT,
+            capital REAL NOT NULL,
+            tasa_anual REAL NOT NULL,
+            cuotas INTEGER NOT NULL,
+            iva_pct REAL NOT NULL,
+            pct_gastos REAL NOT NULL,
+            tasa_seguro REAL NOT NULL,
+            redondeo_excel INTEGER NOT NULL DEFAULT 1,
+            cuota_sin_gasto REAL NOT NULL,
+            cuota_base_gastos REAL NOT NULL,
+            seguro_mensual REAL NOT NULL,
+            cuota_final REAL NOT NULL,
+            total_pagar REAL NOT NULL
+          );
+        `);
+
+        // Migración automática si existe tabla previa con columnas anteriores
+        const colsInfo = AppState.db.exec('PRAGMA table_info(proformas);');
+        if (colsInfo.length > 0) {
+          const colNames = colsInfo[0].values.map(v => v[1]);
+          if (!colNames.includes('cuota_base_gastos')) {
+            AppState.db.run('ALTER TABLE proformas ADD COLUMN cuota_base_gastos REAL NOT NULL DEFAULT 0;');
+            if (colNames.includes('cuota_inventiva')) {
+              AppState.db.run('UPDATE proformas SET cuota_base_gastos = cuota_inventiva;');
+            }
+          }
+          if (!colNames.includes('fecha_desembolso')) {
+            AppState.db.run('ALTER TABLE proformas ADD COLUMN fecha_desembolso TEXT;');
+          }
+          if (!colNames.includes('primer_vencimiento')) {
+            AppState.db.run('ALTER TABLE proformas ADD COLUMN primer_vencimiento TEXT;');
+          }
+          if (!colNames.includes('nro_operacion')) {
+            AppState.db.run('ALTER TABLE proformas ADD COLUMN nro_operacion TEXT;');
+          }
+          if (!colNames.includes('primer_vto_nominal')) {
+            AppState.db.run('ALTER TABLE proformas ADD COLUMN primer_vto_nominal TEXT;');
+          }
+        }
+
+        AppState.isSqliteReady = true;
+        backfillNroOperacion();
+        persistDatabase();
+
+        statusDot.className = 'w-2 h-2 rounded-full bg-emerald-400';
+        statusText.textContent = 'SQLite Activo (Local)';
+      } catch (err) {
+        console.warn('Iniciando respaldo local JSON (SQLite WASM fallback):', err);
+        AppState.isSqliteReady = false;
+        statusDot.className = 'w-2 h-2 rounded-full bg-[#F7D100]';
+        statusText.textContent = 'Almacenamiento Local Activo';
+      }
+
+      if (!AppState.isSqliteReady) backfillNroOperacion();
+      renderSavedProformasTable();
+    }
+
+    function persistDatabase() {
+      if (!AppState.isSqliteReady || !AppState.db) return;
+      try {
+        const data = AppState.db.export();
+        let binary = '';
+        const chunkSize = 0x8000;
+        for (let i = 0; i < data.length; i += chunkSize) {
+          binary += String.fromCharCode.apply(null, data.subarray(i, i + chunkSize));
+        }
+        localStorage.setItem(AppState.storageKeySqlite, btoa(binary));
+      } catch (e) {
+        console.error('Error al persistir SQLite en localStorage:', e);
+      }
+    }
+
+    function exportSqliteBinary() {
+      if (!AppState.isSqliteReady || !AppState.db) {
+        showToast('La exportación binaria .sqlite requiere SQLite WASM activo.', 'warning');
+        return;
+      }
+      const data = AppState.db.export();
+      const blob = new Blob([data], { type: 'application/x-sqlite3' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const dateTag = new Date().toISOString().slice(0, 10);
+      a.href = url;
+      a.download = `Fundacion_Industrial_Proformas_${dateTag}.sqlite`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast('Respaldo SQLite descargado correctamente.', 'success');
+    }
+
+    // ============================================================================
+    // 5. OPERACIONES CRUD SOBRE PROFORMAS
+    // ============================================================================
+
+    // ---- N° de Operación: aaaammdd + secuencia diaria de 3 dígitos (20261123001, 20261123002, ...) ----
+    function proformaOp(r) {
+      if (!r) return '';
+      return (r.nro_operacion && String(r.nro_operacion)) || String(r.id || '');
+    }
+    function opDeProforma(id) {
+      const r = getAllProformas('').find(x => Number(x.id) === Number(id));
+      return r ? proformaOp(r) : String(id);
+    }
+    function parseFechaCreacion(str) {
+      const m = String(str || '').match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+      return m ? new Date(+m[3], +m[2] - 1, +m[1]) : null;
+    }
+    function prefijoOp(d) {
+      return `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`;
+    }
+    function generarNroOperacion() {
+      const pref = prefijoOp(new Date());
+      const max = Math.max(0, ...getAllProformas('')
+        .map(x => String(x.nro_operacion || ''))
+        .filter(o => /^\d{11}$/.test(o) && o.startsWith(pref))
+        .map(o => Number(o.slice(8))));
+      return pref + String(max + 1).padStart(3, '0');
+    }
+    // Asigna N° de operación a proformas guardadas antes de esta versión (según su fecha de creación).
+    function backfillNroOperacion() {
+      const all = getAllProformas('').slice().sort((a, b) => a.id - b.id);
+      const pend = all.filter(x => !/^\d{11}$/.test(String(x.nro_operacion || '')));
+      if (!pend.length) return;
+      const assign = {};
+      pend.forEach(x => {
+        const pref = prefijoOp(parseFechaCreacion(x.fecha_creacion) || new Date());
+        const usados = all.map(y => assign[y.id] || String(y.nro_operacion || '')).filter(o => o.startsWith(pref));
+        const max = Math.max(0, ...usados.map(o => Number(o.slice(8)) || 0));
+        assign[x.id] = pref + String(max + 1).padStart(3, '0');
+      });
+      if (AppState.isSqliteReady && AppState.db) {
+        Object.entries(assign).forEach(([id, op]) => AppState.db.run('UPDATE proformas SET nro_operacion = ? WHERE id = ?', [op, Number(id)]));
+        persistDatabase();
+      } else {
+        const items = JSON.parse(localStorage.getItem(AppState.storageKeyFallback) || '[]');
+        items.forEach(r => { if (assign[r.id]) r.nro_operacion = assign[r.id]; });
+        localStorage.setItem(AppState.storageKeyFallback, JSON.stringify(items));
+      }
+    }
+
+    // Deja el formulario en modo edición de una proforma ya guardada (banner + botón)
+    function setEditingUI(id) {
+      AppState.editingId = id;
+      const op = opDeProforma(id);
+      document.getElementById('editProformaIdLabel').textContent = op;
+      document.getElementById('editModeBanner').classList.remove('hidden');
+      document.getElementById('btnGuardarLabel').textContent = `Actualizar Proforma ${op}`;
+    }
+
+    function saveOrUpdateProforma() {
+      if (!validateClientFields()) {
+        showToast('Completa los datos obligatorios del cliente antes de guardar.', 'error');
+        return;
+      }
+
+      const nombre = document.getElementById('nombreCliente').value.trim();
+      const documento = formatDocumentoCI(document.getElementById('documento').value);
+      const telefono = document.getElementById('telefono').value.trim();
+      const observaciones = document.getElementById('observaciones').value.trim();
+
+      const calc = AppState.currentCalculation || calculateProforma(getFormParameters());
+      const q = calc.params;
+      // Equivalencias con las columnas históricas de la tabla
+      const p = {
+        fecha_desembolso: q.fechaDesembolso, primer_vencimiento: q.primerVencimiento,
+        capital: q.capital, tasa_anual: q.tasaAnual, cuotas: q.plazoMeses, iva_pct: q.ivaPct,
+        pct_gastos: q.pctGastos, tasa_seguro: q.tasaSeguro, redondeo_excel: q.redondear
+      };
+      const s = {
+        cuotaSinGasto: calc.cuotaBaseGastos - calc.gAdmMensual,
+        cuotaBaseGastosMensual: calc.cuotaBaseGastos,
+        seguroIgual: calc.seguroNivelado,
+        cuotaFinalMensual: calc.cuotaFinalReferencia,
+        totalGeneralPagar: calc.totals.cuotaFinal
+      };
+      const nominalVto = (AppState.manualWeekendShift && AppState.manualWeekendShift.shiftedISO === q.primerVencimiento)
+        ? AppState.manualWeekendShift.nominalISO : null;
+      const nowStr = getCurrentFormattedDate();
+
+      if (AppState.isSqliteReady && AppState.db) {
+        if (AppState.editingId !== null) {
+          const stmt = AppState.db.prepare(`
+            UPDATE proformas SET
+              fecha_actualizacion = ?,
+              fecha_desembolso = ?,
+              primer_vencimiento = ?,
+              primer_vto_nominal = ?,
+              nombre_cliente = ?,
+              documento = ?,
+              telefono = ?,
+              observaciones = ?,
+              capital = ?,
+              tasa_anual = ?,
+              cuotas = ?,
+              iva_pct = ?,
+              pct_gastos = ?,
+              tasa_seguro = ?,
+              redondeo_excel = ?,
+              cuota_sin_gasto = ?,
+              cuota_base_gastos = ?,
+              seguro_mensual = ?,
+              cuota_final = ?,
+              total_pagar = ?
+            WHERE id = ?
+          `);
+          stmt.run([
+            nowStr, p.fecha_desembolso, p.primer_vencimiento, nominalVto, nombre, documento, telefono, observaciones,
+            p.capital, p.tasa_anual, p.cuotas, p.iva_pct, p.pct_gastos, p.tasa_seguro,
+            p.redondeo_excel ? 1 : 0,
+            s.cuotaSinGasto, s.cuotaBaseGastosMensual, s.seguroIgual, s.cuotaFinalMensual, s.totalGeneralPagar,
+            AppState.editingId
+          ]);
+          stmt.free();
+          persistDatabase();
+          showToast(`Proforma ${opDeProforma(AppState.editingId)} actualizada correctamente.`, 'success');
+          resetFormToNew(false);
+        } else {
+          const nuevoNroOp = generarNroOperacion();
+          const stmt = AppState.db.prepare(`
+            INSERT INTO proformas (
+              fecha_creacion, fecha_actualizacion, fecha_desembolso, primer_vencimiento, primer_vto_nominal, nombre_cliente, documento, telefono, observaciones,
+              capital, tasa_anual, cuotas, iva_pct, pct_gastos, tasa_seguro, redondeo_excel,
+              cuota_sin_gasto, cuota_base_gastos, seguro_mensual, cuota_final, total_pagar, nro_operacion
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          `);
+          stmt.run([
+            nowStr, nowStr, p.fecha_desembolso, p.primer_vencimiento, nominalVto, nombre, documento, telefono, observaciones,
+            p.capital, p.tasa_anual, p.cuotas, p.iva_pct, p.pct_gastos, p.tasa_seguro,
+            p.redondeo_excel ? 1 : 0,
+            s.cuotaSinGasto, s.cuotaBaseGastosMensual, s.seguroIgual, s.cuotaFinalMensual, s.totalGeneralPagar,
+            nuevoNroOp
+          ]);
+          stmt.free();
+          const newIdRes = AppState.db.exec('SELECT last_insert_rowid()');
+          persistDatabase();
+          setEditingUI(Number(newIdRes[0].values[0][0]));
+          showToast(`Proforma ${nuevoNroOp} guardada para ${nombre}.`, 'success');
+        }
+      } else {
+        // Fallback JSON en localStorage
+        const items = JSON.parse(localStorage.getItem(AppState.storageKeyFallback) || '[]');
+        if (AppState.editingId !== null) {
+          const idx = items.findIndex(x => x.id === AppState.editingId);
+          if (idx !== -1) {
+            items[idx] = {
+              ...items[idx],
+              fecha_actualizacion: nowStr,
+              fecha_desembolso: p.fecha_desembolso,
+              primer_vencimiento: p.primer_vencimiento,
+              primer_vto_nominal: nominalVto,
+              nombre_cliente: nombre,
+              documento,
+              telefono,
+              observaciones,
+              capital: p.capital,
+              tasa_anual: p.tasa_anual,
+              cuotas: p.cuotas,
+              iva_pct: p.iva_pct,
+              pct_gastos: p.pct_gastos,
+              tasa_seguro: p.tasa_seguro,
+              redondeo_excel: p.redondeo_excel ? 1 : 0,
+              cuota_sin_gasto: s.cuotaSinGasto,
+              cuota_base_gastos: s.cuotaBaseGastosMensual,
+              seguro_mensual: s.seguroIgual,
+              cuota_final: s.cuotaFinalMensual,
+              total_pagar: s.totalGeneralPagar
+            };
+          }
+          localStorage.setItem(AppState.storageKeyFallback, JSON.stringify(items));
+          showToast(`Proforma ${opDeProforma(AppState.editingId)} actualizada.`, 'success');
+          resetFormToNew(false);
+        } else {
+          const nextId = items.length > 0 ? Math.max(...items.map(x => x.id)) + 1 : 1;
+          const nuevoNroOp = generarNroOperacion();
+          items.unshift({
+            id: nextId,
+            nro_operacion: nuevoNroOp,
+            fecha_creacion: nowStr,
+            fecha_actualizacion: nowStr,
+            fecha_desembolso: p.fecha_desembolso,
+            primer_vencimiento: p.primer_vencimiento,
+            primer_vto_nominal: nominalVto,
+            nombre_cliente: nombre,
+            documento,
+            telefono,
+            observaciones,
+            capital: p.capital,
+            tasa_anual: p.tasa_anual,
+            cuotas: p.cuotas,
+            iva_pct: p.iva_pct,
+            pct_gastos: p.pct_gastos,
+            tasa_seguro: p.tasa_seguro,
+            redondeo_excel: p.redondeo_excel ? 1 : 0,
+            cuota_sin_gasto: s.cuotaSinGasto,
+            cuota_base_gastos: s.cuotaBaseGastosMensual,
+            seguro_mensual: s.seguroIgual,
+            cuota_final: s.cuotaFinalMensual,
+            total_pagar: s.totalGeneralPagar
+          });
+          localStorage.setItem(AppState.storageKeyFallback, JSON.stringify(items));
+          setEditingUI(nextId);
+          showToast(`Proforma ${nuevoNroOp} guardada para ${nombre}.`, 'success');
+        }
+      }
+
+      renderSavedProformasTable();
+    }
+
+    function getAllProformas(filterText = '') {
+      const q = filterText.trim().toLowerCase();
+      let rows = [];
+
+      if (AppState.isSqliteReady && AppState.db) {
+        const res = AppState.db.exec('SELECT * FROM proformas ORDER BY id DESC;');
+        if (res.length > 0) {
+          const cols = res[0].columns;
+          rows = res[0].values.map(valArr => {
+            const obj = {};
+            cols.forEach((c, i) => { obj[c] = valArr[i]; });
+            return obj;
+          });
+        }
+      } else {
+        rows = JSON.parse(localStorage.getItem(AppState.storageKeyFallback) || '[]');
+      }
+
+      if (!q) return rows;
+      return rows.filter(r =>
+        String(r.id).includes(q) || String(r.nro_operacion || '').includes(q) ||
+        (r.nombre_cliente || '').toLowerCase().includes(q) ||
+        (r.documento || '').toLowerCase().includes(q) ||
+        (r.telefono || '').toLowerCase().includes(q)
+      );
+    }
+
+    function renderSavedProformasTable() {
+      const searchVal = document.getElementById('searchProformas').value || '';
+      const rows = getAllProformas(searchVal);
+      const tbody = document.getElementById('savedProformasTbody');
+      document.getElementById('savedCountBadge').textContent = rows.length;
+
+      if (rows.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="9" class="py-10 px-4 text-center text-zinc-400">
+              <div class="flex flex-col items-center gap-2">
+                <i data-lucide="folder-open" class="w-8 h-8 text-zinc-300"></i>
+                <p class="text-xs font-medium text-zinc-500">No hay proformas guardadas que coincidan con la búsqueda.</p>
+              </div>
+            </td>
+          </tr>
+        `;
+        if (window.lucide) lucide.createIcons();
+        return;
+      }
+
+      tbody.innerHTML = rows.map(row => {
+        const dec = Number(row.redondeo_excel) === 1 ? 0 : 2;
+        const isEditingThis = AppState.editingId === row.id;
+        return `
+          <tr class="${isEditingThis ? 'bg-[#FFF7ED]' : 'hover:bg-zinc-50'} transition-colors">
+            <td class="py-3 px-4 font-bold text-[#18181B] tabular-nums whitespace-nowrap">${proformaOp(row)}</td>
+            <td class="py-3 px-4 text-zinc-500 whitespace-nowrap tabular-nums">${row.fecha_creacion}</td>
+            <td class="py-3 px-4">
+              <p class="font-bold text-[#18181B]">${row.nombre_cliente}</p>
+              <p class="text-[11px] text-zinc-500 tabular-nums">C.I.: ${formatDocumentoCI(row.documento)}</p>
+            </td>
+            <td class="py-3 px-4 text-zinc-600 whitespace-nowrap">${row.telefono}</td>
+            <td class="py-3 px-4 text-right font-semibold tabular-nums">${formatGs(row.capital)}</td>
+            <td class="py-3 px-4 text-center whitespace-nowrap tabular-nums">
+              <span class="px-2 py-0.5 rounded-md bg-[#F5F5F6] border border-[#E4E4E7] font-semibold">${row.cuotas}m · ${formatDecimal(row.tasa_anual, 1)}%</span>
+            </td>
+            <td class="py-3 px-4 text-right font-extrabold text-[#D11D27] tabular-nums">${formatGs(row.cuota_final, dec)}</td>
+            <td class="py-3 px-4 text-right font-bold text-[#18181B] tabular-nums">${formatGs(row.total_pagar, dec)}</td>
+            <td class="py-3 px-4">
+              <div class="flex items-center justify-center gap-1.5">
+                <button type="button" onclick="loadProformaForEdit(${row.id})" title="Editar Proforma"
+                  class="p-2 rounded-lg bg-[#FFF7ED] hover:bg-[#FFEDD5] text-[#F16522] border border-[#FFEDD5] transition cursor-pointer">
+                  <i data-lucide="edit-2" class="w-3.5 h-3.5"></i>
+                </button>
+                <button type="button" onclick="exportSavedProformaPDF(${row.id})" title="Descargar PDF"
+                  class="p-2 rounded-lg bg-[#FEFCE8] hover:bg-[#FEF08A] text-[#D97706] border border-[#FEF08A] transition cursor-pointer">
+                  <i data-lucide="file-down" class="w-3.5 h-3.5"></i>
+                </button>
+                <button type="button" onclick="requestDeleteProforma(${row.id})" title="Eliminar Proforma"
+                  class="p-2 rounded-lg bg-[#FEF2F2] hover:bg-[#FEE2E2] text-[#D11D27] border border-[#FEE2E2] transition cursor-pointer">
+                  <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      if (window.lucide) lucide.createIcons();
+    }
+
+    // Reconstruye el traslado por fin de semana (vencimiento nominal -> lunes) para recalcular igual que al guardar.
+    function restoreWeekendShift(record, primerVtoISO) {
+      if (!record || !record.primer_vto_nominal || record.primer_vto_nominal === primerVtoISO) return null;
+      const shiftDays = daysBetweenDates(parseISODateLocal(record.primer_vto_nominal), parseISODateLocal(primerVtoISO));
+      return shiftDays > 0 ? { nominalISO: record.primer_vto_nominal, shiftedISO: primerVtoISO, shiftDays } : null;
+    }
+
+    function loadProformaForEdit(id) {
+      const all = getAllProformas('');
+      const record = all.find(r => r.id === id);
+      if (!record) return;
+
+      AppState.editingId = record.id;
+
+      const desembISO = record.fecha_desembolso || getTodayISO();
+      const primerVtoISO = record.primer_vencimiento || getNextMonthDateISO(desembISO);
+
+      document.getElementById('nombreCliente').value = record.nombre_cliente || '';
+      document.getElementById('documento').value = formatDocumentoCI(record.documento || '');
+      document.getElementById('telefono').value = record.telefono || '';
+      document.getElementById('observaciones').value = record.observaciones || '';
+      document.getElementById('fechaDesembolso').value = desembISO;
+      document.getElementById('primerVencimiento').value = primerVtoISO;
+      AppState.manualWeekendShift = restoreWeekendShift(record, primerVtoISO);
+      document.getElementById('capital').value = formatIntegerDots(Math.round(record.capital));
+      document.getElementById('tasaAnual').value = record.tasa_anual;
+      document.getElementById('plazoMeses').value = record.cuotas;
+      document.getElementById('ivaPct').value = record.iva_pct;
+      document.getElementById('pctGastos').value = record.pct_gastos;
+      document.getElementById('tasaSeguro').value = record.tasa_seguro;
+      document.getElementById('modoRedondeo').value = String(record.redondeo_excel ?? 1);
+
+      document.getElementById('editProformaIdLabel').textContent = proformaOp(record);
+      document.getElementById('editModeBanner').classList.remove('hidden');
+      document.getElementById('btnGuardarLabel').textContent = `Actualizar Proforma ${proformaOp(record)}`;
+
+      clearValidationErrors();
+      updateUIAndCalculate();
+      renderSavedProformasTable();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      showToast(`Editando Proforma ${proformaOp(record)} de ${record.nombre_cliente}.`, 'info');
+    }
+
+    function resetFormToNew(resetParamsToDefaults = true) {
+      AppState.editingId = null;
+      AppState.manualWeekendShift = null;
+      document.getElementById('editModeBanner').classList.add('hidden');
+      document.getElementById('btnGuardarLabel').textContent = 'Guardar Proforma';
+
+      document.getElementById('nombreCliente').value = '';
+      document.getElementById('documento').value = '';
+      document.getElementById('telefono').value = '';
+      document.getElementById('observaciones').value = '';
+
+      if (resetParamsToDefaults) {
+        const todayISO = getTodayISO();
+        document.getElementById('fechaDesembolso').value = todayISO;
+        document.getElementById('primerVencimiento').value = getNextMonthDateISO(todayISO);
+        AppState.manualWeekendShift = null;
+        document.getElementById('capital').value = '10.000.000';
+        document.getElementById('tasaAnual').value = '24';
+        document.getElementById('plazoMeses').value = '12';
+        document.getElementById('ivaPct').value = '10';
+        document.getElementById('pctGastos').value = '2';
+        document.getElementById('tasaSeguro').value = '0.25';
+        document.getElementById('modoRedondeo').value = '1';
+      }
+
+      clearValidationErrors();
+      updateUIAndCalculate();
+      renderSavedProformasTable();
+    }
+
+    function requestDeleteProforma(id) {
+      const all = getAllProformas('');
+      const record = all.find(r => r.id === id);
+      if (!record) return;
+
+      AppState.pendingDeleteId = id;
+      document.getElementById('confirmModalMessage').textContent =
+        `¿Estás seguro de que deseas eliminar la Proforma ${proformaOp(record)} de "${record.nombre_cliente}" (${formatGs(record.capital)})? Esta acción no se puede deshacer.`;
+      const modal = document.getElementById('confirmModal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function confirmDeleteProforma() {
+      const id = AppState.pendingDeleteId;
+      if (id === null) return;
+
+      if (AppState.isSqliteReady && AppState.db) {
+        const stmt = AppState.db.prepare('DELETE FROM proformas WHERE id = ?');
+        stmt.run([id]);
+        stmt.free();
+        persistDatabase();
+      } else {
+        const items = JSON.parse(localStorage.getItem(AppState.storageKeyFallback) || '[]');
+        const filtered = items.filter(x => x.id !== id);
+        localStorage.setItem(AppState.storageKeyFallback, JSON.stringify(filtered));
+      }
+
+      if (AppState.editingId === id) {
+        resetFormToNew(false);
+      }
+
+      closeDeleteModal();
+      renderSavedProformasTable();
+      showToast('Proforma eliminada.', 'success');
+    }
+
+    function closeDeleteModal() {
+      AppState.pendingDeleteId = null;
+      const modal = document.getElementById('confirmModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    // ============================================================================
+    // 6. VALIDACIÓN Y NOTIFICACIONES TOAST
+    // ============================================================================
+
+    function clearValidationErrors() {
+      ['errNombre', 'errDocumento', 'errTelefono'].forEach(id => {
+        document.getElementById(id).classList.add('hidden');
+      });
+      ['nombreCliente', 'documento', 'telefono'].forEach(id => {
+        document.getElementById(id).classList.remove('border-[#D11D27]', 'ring-2', 'ring-[#D11D27]/20');
+      });
+    }
+
+    function validateClientFields() {
+      clearValidationErrors();
+      let isValid = true;
+
+      const nombre = document.getElementById('nombreCliente');
+      const documento = document.getElementById('documento');
+      const telefono = document.getElementById('telefono');
+
+      if (!nombre.value.trim()) {
+        document.getElementById('errNombre').classList.remove('hidden');
+        nombre.classList.add('border-[#D11D27]', 'ring-2', 'ring-[#D11D27]/20');
+        isValid = false;
+      }
+      if (!documento.value.trim()) {
+        document.getElementById('errDocumento').classList.remove('hidden');
+        documento.classList.add('border-[#D11D27]', 'ring-2', 'ring-[#D11D27]/20');
+        isValid = false;
+      }
+      if (!telefono.value.trim()) {
+        document.getElementById('errTelefono').classList.remove('hidden');
+        telefono.classList.add('border-[#D11D27]', 'ring-2', 'ring-[#D11D27]/20');
+        isValid = false;
+      }
+
+      return isValid;
+    }
+
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+
+      const styles = {
+        success: 'bg-[#18181B] text-white border-l-4 border-emerald-400',
+        error: 'bg-[#18181B] text-white border-l-4 border-[#D11D27]',
+        warning: 'bg-[#18181B] text-white border-l-4 border-[#F7D100]',
+        info: 'bg-[#18181B] text-white border-l-4 border-[#F16522]'
+      };
+
+      toast.className = `${styles[type] || styles.info} px-4 py-3 rounded-xl shadow-xl text-xs font-semibold flex items-center justify-between gap-3 pointer-events-auto transition-all duration-300`;
+      toast.innerHTML = `<span>${message}</span>`;
+      container.appendChild(toast);
+
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(6px)';
+        setTimeout(() => toast.remove(), 300);
+      }, 3200);
+    }
+
+    // ============================================================================
+    // 7. GENERACIÓN DE PDF CORPORATIVO (FUNDACIÓN INDUSTRIAL)
+    // ============================================================================
+
+    /**
+     * Renderiza el logotipo vectorial oficial de Fundación Industrial en un canvas
+     * offscreen de alta resolución (960x390 px) para incrustarlo nítidamente en el PDF.
+     */
+    function getFundacionIndustrialLogoDataUrl() {
+      const canvas = document.createElement('canvas');
+      canvas.width = 480;
+      canvas.height = 180;
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.lineWidth = 16;
+
+      ctx.strokeStyle = '#D11D27';
+      ctx.beginPath();
+      ctx.moveTo(28, 92);
+      ctx.lineTo(82, 38);
+      ctx.moveTo(28, 92);
+      ctx.lineTo(92, 156);
+      ctx.stroke();
+
+      ctx.strokeStyle = '#F7D100';
+      ctx.beginPath();
+      ctx.moveTo(56, 98);
+      ctx.lineTo(122, 32);
+      ctx.moveTo(88, 32);
+      ctx.lineTo(122, 32);
+      ctx.lineTo(122, 66);
+      ctx.stroke();
+
+      ctx.strokeStyle = '#F16522';
+      ctx.beginPath();
+      ctx.moveTo(92, 118);
+      ctx.lineTo(128, 82);
+      ctx.stroke();
+
+      ctx.fillStyle = '#18181B';
+      ctx.font = '900 34px Helvetica, Arial, sans-serif';
+      ctx.fillText('FUNDACIÓN', 152, 82);
+      ctx.fillText('INDUSTRIAL', 152, 120);
+
+      return canvas.toDataURL('image/png');
+    }
+
+    function exportSavedProformaPDF(id) {
+      const all = getAllProformas('');
+      const record = all.find(r => r.id === id);
+      if (!record) return;
+
+      const desembISO = record.fecha_desembolso || getTodayISO();
+      const primerVtoISO = record.primer_vencimiento || getNextMonthDateISO(desembISO);
+      const prevShift = AppState.manualWeekendShift;
+      AppState.manualWeekendShift = restoreWeekendShift(record, primerVtoISO);
+      const calc = calculateProforma({
+        fechaDesembolso: desembISO,
+        primerVencimiento: primerVtoISO,
+        capital: record.capital,
+        tasaAnual: record.tasa_anual,
+        plazoMeses: record.cuotas,
+        ivaPct: record.iva_pct,
+        pctGastos: record.pct_gastos,
+        tasaSeguro: record.tasa_seguro,
+        redondear: Number(record.redondeo_excel) === 1
+      });
+      AppState.manualWeekendShift = prevShift;
+
+      generateProformaPDF({
+        nroOperacion: proformaOp(record),
+        fechaEmision: record.fecha_creacion,
+        nombre: record.nombre_cliente,
+        documento: formatDocumentoCI(record.documento),
+        telefono: record.telefono,
+        calcResult: calc
+      });
+    }
+
+    function generateProformaPDF(overrideData = null) {
+      if (!window.jspdf || !window.jspdf.jsPDF) {
+        showToast('La librería jsPDF aún no terminó de cargarse.', 'error');
+        return;
+      }
+      const calc = overrideData ? overrideData.calcResult : AppState.currentCalculation;
+      if (!calc) return;
+
+      const nombreCliente = (overrideData ? overrideData.nombre : (document.getElementById('nombreCliente').value.trim() || 'SOLICITANTE')).toUpperCase();
+      const documento = overrideData ? (overrideData.documento || '-') : (document.getElementById('documento').value.trim() || '-');
+      const telefono = overrideData ? (overrideData.telefono || '-') : (document.getElementById('telefono').value.trim() || '-');
+      const opNumero = overrideData ? overrideData.nroOperacion : (AppState.editingId !== null ? opDeProforma(AppState.editingId) : '');
+      const fechaEmision = overrideData ? overrideData.fechaEmision : getCurrentFormattedDate();
+      const dec = calc.params.redondear ? 0 : 2;
+
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const margin = 14;
+      const logoUrl = getFundacionIndustrialLogoDataUrl();
+
+      function drawTricolorStrip(yPos) {
+        const w = pageWidth - margin * 2;
+        doc.setFillColor(209, 29, 39);
+        doc.rect(margin, yPos, w * 0.45, 1.3, 'F');
+        doc.setFillColor(247, 209, 0);
+        doc.rect(margin + w * 0.45, yPos, w * 0.30, 1.3, 'F');
+        doc.setFillColor(241, 101, 34);
+        doc.rect(margin + w * 0.75, yPos, w * 0.25, 1.3, 'F');
+      }
+
+      drawTricolorStrip(10);
+      doc.addImage(logoUrl, 'PNG', margin, 14, 52, 19.5);
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(13);
+      doc.setTextColor(24, 24, 27);
+      doc.text('PROFORMA DE PRÉSTAMO', pageWidth - margin, 21, { align: 'right' });
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8.5);
+      doc.setTextColor(82, 82, 91);
+      doc.text(`${opNumero ? `Operación N° ${opNumero} · ` : ''}Fecha de emisión: ${fechaEmision}`, pageWidth - margin, 26, { align: 'right' });
+      doc.text('RUC: 80011774-3 · Senador Long N°625 c/ Lillo · Tel.: (021) 605 700', pageWidth - margin, 31, { align: 'right' });
+
+      doc.setDrawColor(228, 228, 231);
+      doc.line(margin, 36, pageWidth - margin, 36);
+
+      doc.setFillColor(244, 244, 245);
+      doc.roundedRect(margin, 39, pageWidth - margin * 2, 26, 2, 2, 'F');
+
+      doc.setFontSize(8.5);
+      doc.setTextColor(24, 24, 27);
+      doc.setFont('helvetica', 'bold');
+      doc.text('SOLICITANTE:', margin + 4, 45);
+      doc.setFont('helvetica', 'normal');
+      const clienteWrapped = doc.splitTextToSize(nombreCliente, 85)[0] || nombreCliente;
+      doc.text(clienteWrapped, margin + 28, 45);
+
+      doc.setFont('helvetica', 'bold');
+      doc.text('C.I. / RUC:', margin + 4, 51);
+      doc.setFont('helvetica', 'normal');
+      doc.text(documento, margin + 28, 51);
+
+      doc.setFont('helvetica', 'bold');
+      doc.text('TELÉFONO:', margin + 4, 57);
+      doc.setFont('helvetica', 'normal');
+      doc.text(telefono, margin + 28, 57);
+
+      doc.setFont('helvetica', 'bold');
+      doc.text('CAPITAL:', pageWidth / 2 + 6, 45);
+      doc.setFont('helvetica', 'normal');
+      doc.text(formatGs(calc.params.capital, 0), pageWidth - margin - 4, 45, { align: 'right' });
+
+      doc.setFont('helvetica', 'bold');
+      doc.text('PLAZO / T.A.N. / T.A.E.:', pageWidth / 2 + 6, 51);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`${calc.params.plazoMeses} cuotas · ${calc.params.tasaAnual}% · TAE ${calc.taeAnualPct.toFixed(2)}%`, pageWidth - margin - 4, 51, { align: 'right' });
+
+      doc.setFont('helvetica', 'bold');
+      doc.text('DESEMBOLSO / 1ER VTO.:', pageWidth / 2 + 6, 57);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`${formatISODateToDMY(calc.params.fechaDesembolso)} · ${formatISODateToDMY(calc.params.primerVencimiento)}`, pageWidth - margin - 4, 57, { align: 'right' });
+
+      doc.setFont('helvetica', 'bold');
+      doc.text('CUOTA MENSUAL:', margin + 4, 62.5);
+      doc.setTextColor(209, 29, 39);
+      doc.text(formatGs(calc.cuotaFinalReferencia, dec), margin + 35, 62.5);
+
+      doc.setTextColor(24, 24, 27);
+      doc.text('GASTOS ADM. + IVA:', pageWidth / 2 + 6, 62.5);
+      doc.setFont('helvetica', 'normal');
+      doc.text(formatGs(calc.gAdmTotal, dec), pageWidth - margin - 4, 62.5, { align: 'right' });
+
+      doc.autoTable({
+        startY: 69,
+        head: [['N°', 'Vencimiento', 'Días', 'Saldo Inicial', 'Amort. Capital', 'Gastos Adm.', 'Interés', 'IVA', 'Seg. Vida', 'Cuota Final', 'Saldo Final']],
+        body: calc.schedule.map(r => [
+          String(r.cuota),
+          r.vencimiento,
+          String(r.dias),
+          formatPlainNumber(r.saldoInicial, dec),
+          formatPlainNumber(r.amortCapital, dec),
+          formatPlainNumber(r.gAdmCuota, dec),
+          formatPlainNumber(r.interes, dec),
+          formatPlainNumber(r.iva, dec),
+          formatPlainNumber(r.seguro, dec),
+          formatPlainNumber(r.cuotaFinal, dec),
+          formatPlainNumber(r.saldoFinal, dec)
+        ]),
+        foot: [[
+          '', 'TOTALES', '', '',
+          formatPlainNumber(calc.totals.amortCapital, dec),
+          formatPlainNumber(calc.totals.gAdm, dec),
+          formatPlainNumber(calc.totals.interes, dec),
+          formatPlainNumber(calc.totals.iva, dec),
+          formatPlainNumber(calc.totals.seguro, dec),
+          formatPlainNumber(calc.totals.cuotaFinal, dec),
+          '0'
+        ]],
+        margin: { left: margin, right: margin },
+        theme: 'grid',
+        styles: { font: 'helvetica', fontSize: 6.8, cellPadding: 1.3, textColor: [24, 24, 27] },
+        headStyles: { fillColor: [24, 24, 27], textColor: [255, 255, 255], fontStyle: 'bold', halign: 'center' },
+        footStyles: { fillColor: [24, 24, 27], textColor: [247, 209, 0], fontStyle: 'bold' },
+        columnStyles: {
+          0: { halign: 'center', cellWidth: 8 },
+          1: { halign: 'center', cellWidth: 18 },
+          2: { halign: 'center', cellWidth: 9 },
+          3: { halign: 'right' },
+          4: { halign: 'right' },
+          5: { halign: 'right' },
+          6: { halign: 'right' },
+          7: { halign: 'right' },
+          8: { halign: 'right' },
+          9: { halign: 'right', fontStyle: 'bold', textColor: [209, 29, 39] },
+          10: { halign: 'right' }
+        },
+        didDrawPage: function (data) {
+          if (data.pageNumber > 1) {
+            drawTricolorStrip(8);
+          }
+        }
+      });
+
+      let finalY = doc.lastAutoTable.finalY + 8;
+      if (finalY > pageHeight - 18) {
+        doc.addPage();
+        drawTricolorStrip(8);
+        finalY = 20;
+      }
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8.5);
+      doc.setTextColor(63, 63, 70);
+      doc.text('Para uso interno de FUNDACIÓN INDUSTRIAL.', pageWidth / 2, finalY, { align: 'center' });
+      drawTricolorStrip(pageHeight - 10);
+
+      const safeFileName = nombreCliente.replace(/[^A-Z0-9]+/g, '_').replace(/^_|_$/g, '') || 'PROFORMA';
+      doc.save(`Proforma_Fundacion_Industrial_${safeFileName}.pdf`);
+      showToast('PDF de la proforma generado correctamente.', 'success');
+    }
+
+    // ============================================================================
+    // 8. INICIALIZACIÓN Y EVENT LISTENERS DE LA INTERFAZ
+    // ============================================================================
+
+    function setTableViewMode(mode) {
+      AppState.viewMode = mode;
+      const btnComm = document.getElementById('btnViewCommercial');
+      const btnAnal = document.getElementById('btnViewAnalytical');
+
+      if (mode === 'commercial') {
+        btnComm.className = 'px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-[#18181B] text-white shadow-xs transition cursor-pointer';
+        btnAnal.className = 'px-3.5 py-1.5 rounded-lg text-xs font-semibold text-zinc-600 hover:text-[#18181B] transition cursor-pointer';
+      } else {
+        btnAnal.className = 'px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-[#18181B] text-white shadow-xs transition cursor-pointer';
+        btnComm.className = 'px-3.5 py-1.5 rounded-lg text-xs font-semibold text-zinc-600 hover:text-[#18181B] transition cursor-pointer';
+      }
+
+      if (AppState.currentCalculation) {
+        renderCuoteroTable(AppState.currentCalculation);
+      }
+    }
+
+    function bindEvents() {
+      // Máscaras en tiempo real para C.I./RUC y Capital
+      const docInput = document.getElementById('documento');
+      docInput.addEventListener('input', function () {
+        applyDocumentoMask(this);
+        clearValidationErrors();
+      });
+
+      const capitalInput = document.getElementById('capital');
+      capitalInput.addEventListener('input', function () {
+        applyCurrencyMask(this);
+        updateUIAndCalculate();
+      });
+
+      // Limpiar alertas de validación al escribir en campos del cliente
+      ['nombreCliente', 'telefono'].forEach(id => {
+        document.getElementById(id).addEventListener('input', clearValidationErrors);
+      });
+
+      // Botones rápidos de incremento de capital (+1M, +5M, +10M)
+      document.querySelectorAll('.quick-capital-inc').forEach(btn => {
+        btn.addEventListener('click', function () {
+          const inc = parseInt(this.getAttribute('data-inc'), 10) || 0;
+          const current = parseMonto(capitalInput.value);
+          capitalInput.value = formatIntegerDots(current + inc);
+          updateUIAndCalculate();
+        });
+      });
+
+      // Botones rápidos de plazo en meses
+      document.querySelectorAll('.quick-plazo').forEach(btn => {
+        btn.addEventListener('click', function () {
+          document.getElementById('plazoMeses').value = this.getAttribute('data-plazo');
+          updateUIAndCalculate();
+        });
+      });
+
+      // Botones rápidos de tasa de seguro
+      document.querySelectorAll('.quick-seguro').forEach(btn => {
+        btn.addEventListener('click', function () {
+          document.getElementById('tasaSeguro').value = this.getAttribute('data-seguro');
+          updateUIAndCalculate();
+        });
+      });
+
+      // Fechas: el 1er vencimiento que cae en fin de semana se traslada al lunes hábil sin recargo de interés
+      const fechaDesembEl = document.getElementById('fechaDesembolso');
+      const primerVtoEl = document.getElementById('primerVencimiento');
+
+      primerVtoEl.addEventListener('change', e => {
+        const val = e.target.value;
+        const desembolsoVal = fechaDesembEl.value || getTodayISO();
+        if (val) {
+          if (val < desembolsoVal) {
+            e.target.value = formatDateISO(adjustToNextBusinessDay(parseISODateLocal(desembolsoVal)));
+            AppState.manualWeekendShift = null;
+            showToast('El 1er vencimiento no puede ser anterior al desembolso.', 'warning');
+            updateUIAndCalculate();
+            return;
+          }
+          const rawDate = parseISODateLocal(val);
+          const habilDate = adjustToNextBusinessDay(rawDate);
+          const shiftDays = daysBetweenDates(rawDate, habilDate);
+          if (shiftDays > 0) {
+            const shiftedISO = formatDateISO(habilDate);
+            AppState.manualWeekendShift = { nominalISO: val, shiftedISO, shiftDays };
+            e.target.value = shiftedISO;
+            showToast('El 1er vencimiento caía en fin de semana y se trasladó al lunes hábil sin recargo de interés.', 'info');
+          } else {
+            AppState.manualWeekendShift = null;
+          }
+        }
+        updateUIAndCalculate();
+      });
+
+      fechaDesembEl.addEventListener('change', e => {
+        AppState.manualWeekendShift = null;
+        if (e.target.value) {
+          primerVtoEl.value = getNextMonthDateISO(e.target.value);
+        }
+        updateUIAndCalculate();
+      });
+
+      ['plazoMeses', 'ivaPct', 'tasaAnual', 'pctGastos', 'tasaSeguro', 'modoRedondeo'].forEach(id => {
+        const el = document.getElementById(id);
+        el.addEventListener('input', updateUIAndCalculate);
+        el.addEventListener('change', updateUIAndCalculate);
+      });
+
+      // Selector de vista del cuotero (Comercial vs Analítica)
+      document.getElementById('btnViewCommercial').addEventListener('click', () => setTableViewMode('commercial'));
+      document.getElementById('btnViewAnalytical').addEventListener('click', () => setTableViewMode('analytical'));
+
+      // Botones principales de acción CRUD y PDF
+      document.getElementById('btnGuardarProforma').addEventListener('click', saveOrUpdateProforma);
+      document.getElementById('btnGenerarPdf').addEventListener('click', () => generateProformaPDF());
+      document.getElementById('btnNuevaProforma').addEventListener('click', () => resetFormToNew(true));
+      document.getElementById('btnCancelEdit').addEventListener('click', () => resetFormToNew(false));
+      document.getElementById('btnExportSqlite').addEventListener('click', exportSqliteBinary);
+
+      // Buscador en tiempo real del historial SQLite
+      document.getElementById('searchProformas').addEventListener('input', renderSavedProformasTable);
+
+      // Modal de confirmación de eliminación
+      document.getElementById('btnCancelDelete').addEventListener('click', closeDeleteModal);
+      document.getElementById('btnConfirmDelete').addEventListener('click', confirmDeleteProforma);
+      document.getElementById('confirmModal').addEventListener('click', function (e) {
+        if (e.target === this) {
+          closeDeleteModal();
+        }
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      // Establecer fecha de desembolso inicial al día de hoy y 1er vencimiento a +1 mes
+      const fechaInput = document.getElementById('fechaDesembolso');
+      const primerVtoInput = document.getElementById('primerVencimiento');
+      if (!fechaInput.value) {
+        fechaInput.value = getTodayISO();
+      }
+      if (!primerVtoInput.value) {
+        primerVtoInput.value = getNextMonthDateISO(fechaInput.value);
+      }
+
+      if (window.lucide) {
+        lucide.createIcons();
+      }
+
+      bindEvents();
+      updateUIAndCalculate();
+      await initDatabase();
+    });
+  </script>
+</body>
+</html>

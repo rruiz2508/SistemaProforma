@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Secretos y configuración local (nunca al repositorio)
+.env
+
+# Datos generados en ejecución (la BD contiene datos personales de clientes)
+data/*.db
+data/*.sqlite
+data/*.sqlite3
+data/pdf/
+*.log
+
+# IDE / SO
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store

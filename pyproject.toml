@@ -1,0 +1,10 @@
+[project]
+name = "sistema-proformas"
+version = "1.0.0"
+description = "Sistema de proformas de préstamos (Tkinter + SQLite + PDF)"
+requires-python = ">=3.11"
+dependencies = ["reportlab>=4.2"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
