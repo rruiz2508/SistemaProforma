@@ -25,10 +25,12 @@ def siguiente_dia_habil(d: date) -> date:
 
 
 def sumar_meses_habil(base: date, meses: int) -> date:
+    """Suma `meses` a `base` y traslada el resultado a día hábil."""
     return siguiente_dia_habil(sumar_meses(base, meses))
 
 
 def dias_entre(d1: date, d2: date) -> int:
+    """Días corridos entre dos fechas (nunca negativo)."""
     return max(0, (d2 - d1).days)
 
 

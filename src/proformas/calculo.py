@@ -34,6 +34,7 @@ def _r(x: float, entero: bool) -> float:
 
 @dataclass(frozen=True)
 class ParametrosProforma:
+    """Datos de entrada del cálculo. Es inmutable (frozen) para evitar modificaciones accidentales."""
     capital: int
     tasa_anual: float  # TAN %
     cuotas: int
@@ -47,11 +48,13 @@ class ParametrosProforma:
     primer_vto_nominal: date | None = None
 
     def primer_vto_efectivo(self) -> date:
+        """Primer vencimiento a usar: el indicado o, si falta, desembolso + 1 mes hábil."""
         return self.primer_vencimiento or siguiente_mes_habil(self.fecha_desembolso)
 
 
 @dataclass(frozen=True)
 class FilaCuota:
+    """Una fila del cuotero (una cuota). Los importes están redondeados según el modo elegido."""
     cuota: int
     vencimiento: date
     dias: int
@@ -70,6 +73,7 @@ class FilaCuota:
 
 @dataclass(frozen=True)
 class Totales:
+    """Suma de cada columna del cuotero."""
     amort_capital: float
     g_adm: float
     amort_total: float
@@ -83,6 +87,7 @@ class Totales:
 
 @dataclass(frozen=True)
 class ResultadoProforma:
+    """Resultado completo del cálculo: indicadores, tasas, fechas y el cuotero con sus totales."""
     params: ParametrosProforma
     i_mensual_pct: float
     i_mensual_iva_pct: float
@@ -107,6 +112,7 @@ class ResultadoProforma:
 
     @property
     def decimales(self) -> int:
+        """Decimales a mostrar: 0 en redondeo institucional, 2 en modo exacto."""
         return 0 if self.params.redondear else 2
 
 
@@ -128,6 +134,7 @@ def calcular_tae(capital: float, desembolso: date, pagos: list[tuple[date, float
     t = [dias_entre(desembolso, f) / BASE_DIAS_TAE for f, _ in pagos]
 
     def vp(r: float) -> float:
+        """Valor presente de los pagos a la tasa `r`, menos lo recibido. Es 0 cuando `r` es la TAE."""
         return sum(m / (1 + r) ** ti for (_, m), ti in zip(pagos, t)) - capital
 
     if vp(0) <= 0:
@@ -150,22 +157,31 @@ def calcular_proforma(p: ParametrosProforma) -> ResultadoProforma:
     capital = float(p.capital)
     ent = p.redondear
 
+    # ---- 1. Tasas -------------------------------------------------------------------------
+    # La TAN se divide en 12 para obtener la tasa mensual. El IVA se suma sobre el interés,
+    # por eso la cuota francesa se calcula con la tasa mensual "con IVA".
     iva = p.iva_pct / 100
     i_men = (p.tasa_anual / 100) / 12
     i_men_iva = i_men * (1 + iva)
     tasa_anual_iva = p.tasa_anual * (1 + iva)
 
+    # ---- 2. Cuota base (Método Francés, cuota constante) -----------------------------------
+    #   cuota = capital * i*(1+i)^n / ((1+i)^n - 1)      (si la tasa es 0: capital / n)
     if i_men_iva > 0:
         factor = (1 + i_men_iva) ** n
         cuota_sin_gasto = capital * (i_men_iva * factor) / (factor - 1)
     else:
         cuota_sin_gasto = capital / n
 
+    # ---- 3. Gastos administrativos: porcentaje del capital + IVA, prorrateado en n cuotas ----
     g_base = capital * (p.pct_gastos / 100)
     g_iva = g_base * iva
     g_total = g_base + g_iva
     g_mensual_ex = g_total / n
 
+    # ---- 4. Fechas del primer período ---------------------------------------------------------
+    # El 1er vencimiento nunca cae en fin de semana (se pasa al lunes). Esos días de traslado NO
+    # generan interés. Solo se cobra un recargo si el período real supera los 30 días.
     d_des = p.fecha_desembolso
     v1_raw = p.primer_vto_efectivo()
     v1_habil = siguiente_dia_habil(d_des) if v1_raw < d_des else siguiente_dia_habil(v1_raw)
@@ -173,12 +189,15 @@ def calcular_proforma(p: ParametrosProforma) -> ResultadoProforma:
     nominal_1m = sumar_meses(d_des, 1)
     habil_1m = siguiente_dia_habil(nominal_1m)
 
+    # "ancla": fecha nominal desde la que se cuentan los meses siguientes (cuota 2 = ancla + 1 mes...).
     ancla = d_des if v1_raw < d_des else v1_raw
     dias_traslado = dias_entre(ancla, v1_habil)
     if v1_habil == habil_1m:
+        # Caso habitual: 1er vencimiento = desembolso + 1 mes (ya trasladado a día hábil)
         ancla = nominal_1m
         dias_traslado = dias_entre(nominal_1m, habil_1m)
     elif p.primer_vto_nominal is not None and p.primer_vto_nominal < v1_habil:
+        # El usuario eligió un día de fin de semana y se trasladó: se conserva la fecha original
         ancla = p.primer_vto_nominal
         dias_traslado = dias_entre(p.primer_vto_nominal, v1_habil)
 
@@ -186,6 +205,9 @@ def calcular_proforma(p: ParametrosProforma) -> ResultadoProforma:
     dias_comp = max(0, dias_primer - dias_traslado)
     dias_exc = max(0, dias_comp - 30)
 
+    # ---- 5. Interés extra por primer período largo ---------------------------------------------
+    # "modificado": el 1er vencimiento se alejó del habitual. Regla legado: se cobran los meses
+    # completos hasta esa fecha MÁS un mes extra, calculados sobre capital + gastos.
     modificado = LEGACY_MES_EXTRA_PRIMER_VTO and dias_exc > 0 and v1_raw > siguiente_mes_habil(d_des)
     base_credito = capital + g_total
     meses_primer = 1
@@ -198,14 +220,19 @@ def calcular_proforma(p: ParametrosProforma) -> ResultadoProforma:
     if modificado:
         extra_base_total = i_men * (base_credito * meses_primer - capital)
     elif dias_exc > 0:
+        # Sin regla legado: interés proporcional por cada día que excede los 30
         extra_base_total = capital * (i_men / 30) * dias_exc
     else:
         extra_base_total = 0.0
+    # El recargo (con su IVA) se reparte en partes iguales entre todas las cuotas.
     extra_total = extra_base_total * (1 + iva)
     extra_base_cuota_ex = extra_base_total / n
     extra_total_cuota_ex = extra_total / n
 
-    # Seguro nivelado: promedio del seguro (con IVA) sobre el saldo de cada período.
+    # ---- 6. Seguro nivelado -------------------------------------------------------------------
+    # El seguro real baja con el saldo; para que todas las cuotas sean iguales se promedia:
+    # se simula la amortización (en valores exactos, sin redondear) sumando el seguro con IVA de
+    # cada período y se divide por n.
     saldo_ex = capital
     seg_rate = p.tasa_seguro / 100
     suma_seg = ((base_credito if modificado else saldo_ex) * seg_rate) * (1 + iva)
@@ -218,6 +245,8 @@ def calcular_proforma(p: ParametrosProforma) -> ResultadoProforma:
             suma_seg += (saldo_ex * seg_rate) * (1 + iva)
     seguro_niv_ex = suma_seg / n
 
+    # Redondeo del seguro: en modo entero con 1er vto modificado se redondea el seguro sin IVA y
+    # su IVA por separado (así lo hace el sistema original); en los demás casos, el total.
     if not ent:
         seguro_niv = round(seguro_niv_ex, 2)
     elif modificado:
@@ -229,13 +258,21 @@ def calcular_proforma(p: ParametrosProforma) -> ResultadoProforma:
     g_mensual = _r(g_mensual_ex, ent)
     extra_total_cuota = _r(extra_total_cuota_ex, ent)
 
+    # ---- 7. Cuota final de referencia ---------------------------------------------------------
+    # Se suman los componentes EXACTOS y recién el total se redondea (no cada sumando por
+    # separado), para no acumular error de redondeo en la cuota.
     base_gastos_ex = cuota_sin_gasto + g_mensual_ex + extra_total_cuota_ex
     cuota_base_gastos = _r(base_gastos_ex, ent)
     cuota_final_ref = _r(base_gastos_ex + seguro_niv_ex, ent)
 
+    # Modo legado: el crédito total (capital + gastos) se redondea al millar en la última cuota.
     credito_red = redondeo_js(capital + g_total)
     ajuste = (redondeo_js(credito_red / 1000) * 1000 - credito_red) if (modificado and ent) else 0
 
+    # ---- 8. Construcción del cuotero (fila por fila) ------------------------------------------
+    # Todas las cuotas valen lo mismo (cuota_final_ref). En cada fila el interés sale del saldo,
+    # y la amortización de capital es lo que "sobra" de la cuota tras pagar gastos, interés, IVA
+    # y seguro. La última cuota cancela el saldo y absorbe el residuo de redondeo.
     cuotero: list[FilaCuota] = []
     saldo_cap = capital
     saldo_g = _r(g_total, ent)
@@ -262,8 +299,11 @@ def calcular_proforma(p: ParametrosProforma) -> ResultadoProforma:
             disp = cuota_final - seg - g_cuota - interes - iva_k
             amort = float(max(0, min(s_ini, redondeo_js(disp)))) if ent else round(max(0.0, min(s_ini, disp)), 2)
         else:
+            # Última cuota: se cancela todo el saldo pendiente
             amort = _r(s_ini, ent) + ajuste
             cuota_final = _r(amort + g_cuota + interes + iva_k + seg, ent)
+            # Cuadre: si por redondeo la última cuota difiere unos pocos Gs. de las demás, la
+            # diferencia se absorbe en el interés para que todas valgan exactamente lo mismo.
             residuo = cuota_final_ref - cuota_final
             if n > 1 and residuo != 0 and abs(residuo) <= max(5, cuota_final_ref * 0.005):
                 interes = _r(interes + residuo, ent)
@@ -294,6 +334,7 @@ def calcular_proforma(p: ParametrosProforma) -> ResultadoProforma:
         cuota_final_ref = cuotero[0].cuota_final
         cuota_base_gastos = cuotero[0].cuota_base_gastos
 
+    # ---- 9. T.A.E.: lo que realmente paga el cliente (incluye gastos, IVA y seguro) ------------
     tae = calcular_tae(
         capital,
         d_des,

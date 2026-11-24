@@ -4,7 +4,7 @@ from __future__ import annotations
 import logging
 import os
 import tkinter as tk
-from datetime import date
+from datetime import date, datetime
 from tkinter import filedialog, messagebox, ttk
 
 from .. import formato as f
@@ -28,6 +28,8 @@ from .widgets import CARBON, Campo, configurar_estilos
 
 log = logging.getLogger("proformas")
 
+# Definición de columnas del cuotero: (clave, título, ancho en px, alineación).
+# "Comercial" es la que ve el cliente; "Analítica" replica las columnas de la planilla Excel.
 COLS_COMERCIAL = (
     ("n", "N°", 40, "center"), ("vto", "Vencimiento", 90, "center"), ("dias", "Días", 50, "center"),
     ("saldo_ini", "Saldo Inicial", 105, "e"), ("amort", "Amort. Capital", 105, "e"),
@@ -44,7 +46,17 @@ COLS_ANALITICA = (
 
 
 class App(tk.Tk):
+    """Ventana principal. Solo orquesta: lee los campos, valida, llama al cálculo y muestra/guarda.
+
+    No contiene reglas de negocio (están en `calculo.py`) ni SQL (está en `db.py`).
+
+    Estado que mantiene:
+      editando  -- id de la proforma en edición (None si se está creando una nueva).
+      nominal   -- 1er vencimiento original si cayó en fin de semana y se trasladó al lunes.
+      resultado -- último cálculo válido (None si algún parámetro es inválido).
+    """
     def __init__(self, cfg: Config, repo: RepositorioProformas) -> None:
+        """Crea la ventana, aplica los estilos, arma los widgets y carga el estado inicial."""
         super().__init__()
         self.cfg = cfg
         self.repo = repo
@@ -64,6 +76,9 @@ class App(tk.Tk):
     # ------------------------------------------------------------------ errores internos
     def report_callback_exception(self, exc, val, tb) -> None:  # noqa: D401
         """Ningún error interno cierra la app ni muestra un traceback al usuario."""
+        # Tk llama a este método cuando falla cualquier callback (clic, tecla...). Por defecto
+        # imprimiría el traceback en consola; aquí se guarda en el log y se avisa con un mensaje
+        # comprensible, sin cerrar la aplicación.
         log.error("Error no controlado en la interfaz", exc_info=(exc, val, tb))
         self._estado("Ocurrió un error inesperado. La operación no se completó.", error=True)
         messagebox.showerror(
@@ -74,6 +89,7 @@ class App(tk.Tk):
 
     # ------------------------------------------------------------------ construcción de la UI
     def _construir(self) -> None:
+        """Arma la estructura general: barra superior, barra de estado y el cuerpo con desplazamiento vertical."""
         barra = ttk.Frame(self, style="Oscuro.TFrame")
         barra.pack(fill="x")
         ttk.Frame(barra, height=5, style="Oscuro.TFrame").pack(fill="x")
@@ -82,13 +98,16 @@ class App(tk.Tk):
         ttk.Label(cab, text="FUNDACIÓN INDUSTRIAL", style="Titulo.TLabel").pack(side="left")
         ttk.Label(cab, text="   Sistema de Proformas · Método Francés · Gastos Administrativos y Seguro Nivelado",
                   style="OscuroSub.TLabel").pack(side="left")
-        ttk.Button(cab, text="Respaldar BD…", command=self.respaldar).pack(side="right")
+        ttk.Button(cab, text="Importar BD…", command=self.importar).pack(side="right")
+        ttk.Button(cab, text="Respaldar BD…", command=self.respaldar).pack(side="right", padx=6)
 
         self.estado = ttk.Label(self, text="Listo.", style="Estado.TLabel", anchor="w", padding=(12, 4))
         self.estado.pack(side="bottom", fill="x")
 
         cont = ttk.Frame(self, style="Fondo.TFrame")
         cont.pack(fill="both", expand=True)
+        # Tk no tiene un contenedor con scroll nativo: se usa un Canvas que aloja un Frame y se
+        # ajusta su región desplazable cada vez que el Frame cambia de tamaño.
         self.lienzo = tk.Canvas(cont, bg="#F5F5F6", highlightthickness=0)
         sb = ttk.Scrollbar(cont, orient="vertical", command=self.lienzo.yview)
         self.lienzo.configure(yscrollcommand=sb.set)
@@ -116,12 +135,14 @@ class App(tk.Tk):
         self._card_guardadas()
 
     def _rueda(self, e: tk.Event) -> None:
+        """Desplaza el cuerpo con la rueda del mouse, salvo sobre widgets que ya tienen su propio desplazamiento."""
         if isinstance(e.widget, (ttk.Treeview, tk.Text, ttk.Combobox)) or str(e.widget).endswith("combo"):
             return
         self.lienzo.yview_scroll(int(-e.delta / 120), "units")
 
     # ---- 1. Cliente
     def _card_cliente(self, padre: ttk.Frame) -> None:
+        """Sección 1: datos del cliente y botones de acción (guardar, PDF, limpiar)."""
         card = ttk.LabelFrame(padre, text=" 1  Datos del Cliente ", style="Card.TLabelframe", padding=10)
         card.grid(row=0, column=0, sticky="nsew", padx=(0, 6))
         card.columnconfigure(0, weight=1)
@@ -149,6 +170,7 @@ class App(tk.Tk):
             row=1, column=0, columnspan=2, sticky="ew", padx=6, pady=(6, 0))
 
     def _limitar_obs(self) -> None:
+        """Corta las observaciones a 300 caracteres (un Text no tiene filtro de teclado propio)."""
         txt = self.t_obs.get("1.0", "end-1c")
         if len(txt) > 300:
             self.t_obs.delete("1.0", "end")
@@ -159,13 +181,16 @@ class App(tk.Tk):
 
     # ---- 2. Parámetros
     def _card_parametros(self, padre: ttk.Frame) -> None:
+        """Sección 2: parámetros del cálculo, atajos rápidos y criterio de redondeo."""
         card = ttk.LabelFrame(padre, text=" 2  Parámetros — Método Francés (recálculo en vivo) ",
                               style="Card.TLabelframe", padding=10)
         card.grid(row=0, column=1, sticky="nsew", padx=(6, 0))
         card.columnconfigure((0, 1), weight=1, uniform="p")
         rc = self.recalcular
-        self.p_desemb = Campo(card, 0, "Fecha de Desembolso (DD/MM/AAAA)", "fecha", col=0, al_cambiar=rc)
-        self.p_vto = Campo(card, 0, "Primer Vencimiento (Cuota 1)", "fecha", col=1, al_cambiar=rc)
+        self.p_desemb = Campo(card, 0, "Fecha de Desembolso (DD/MM/AAAA)", "fecha", col=0, al_cambiar=rc,
+                             al_elegir=lambda: self._al_cambiar_desembolso())
+        self.p_vto = Campo(card, 0, "Primer Vencimiento (Cuota 1)", "fecha", col=1, al_cambiar=rc,
+                           al_elegir=lambda: self._normalizar_vto())
         self.p_capital = Campo(card, 1, "Capital Solicitado (Gs.)", "monto", col=0, valor="10.000.000", al_cambiar=rc)
         self.p_cuotas = Campo(card, 1, "Cantidad de Cuotas Mensuales (1–120)", "entero", col=1, valor="12",
                               sufijo="meses", al_cambiar=rc)
@@ -207,6 +232,7 @@ class App(tk.Tk):
         self.lbl_fechas.grid(row=8,column=0, columnspan=2, sticky="w", padx=6)
 
     def _sumar_capital(self, inc: int) -> None:
+        """Suma `inc` al capital actual (tope: 100.000.000.000). Si el capital es inválido parte de 0."""
         try:
             actual = validar_capital(self.p_capital.get())
         except ErrorValidacion:
@@ -215,6 +241,7 @@ class App(tk.Tk):
 
     # ---- KPIs
     def _kpis(self) -> None:
+        """Fila de 4 tarjetas con los indicadores: cuota final, base + gastos, seguro nivelado y total."""
         fila = ttk.Frame(self.cuerpo, style="Fondo.TFrame")
         fila.pack(fill="x", padx=12, pady=6)
         fila.columnconfigure((0, 1, 2, 3), weight=1, uniform="k")
@@ -233,6 +260,7 @@ class App(tk.Tk):
 
     # ---- 3. Cuotero
     def _card_cuotero(self) -> None:
+        """Sección 3: tabla del cuotero con selector de vista comercial / analítica."""
         card = ttk.LabelFrame(self.cuerpo, text=" 3  Vista Previa del Cuotero ", style="Card.TLabelframe", padding=8)
         card.pack(fill="x", padx=12, pady=6)
         sel = ttk.Frame(card)
@@ -255,6 +283,7 @@ class App(tk.Tk):
 
     # ---- 4. Guardadas
     def _card_guardadas(self) -> None:
+        """Sección 4: proformas guardadas, buscador y acciones (editar, PDF, eliminar)."""
         card = ttk.LabelFrame(self.cuerpo, text=" 4  Proformas Guardadas (SQLite) ", style="Card.TLabelframe", padding=8)
         card.pack(fill="x", padx=12, pady=(6, 14))
         top = ttk.Frame(card)
@@ -289,15 +318,18 @@ class App(tk.Tk):
 
     # ------------------------------------------------------------------ utilidades UI
     def _estado(self, texto: str, error: bool = False) -> None:
+        """Muestra un mensaje en la barra de estado (✔ éxito, ⚠ problema)."""
         self.estado.configure(text=("⚠ " if error else "✔ ") + texto)
 
     def _campos_param(self) -> dict[str, Campo]:
+        """Mapa 'clave de validación -> Campo' de los parámetros, para mostrar cada error junto a su campo."""
         return {"desembolso": self.p_desemb, "primer_vto": self.p_vto, "capital": self.p_capital,
                 "cuotas": self.p_cuotas, "iva": self.p_iva, "tan": self.p_tan, "gastos": self.p_gastos,
                 "seguro": self.p_seguro}
 
     # ------------------------------------------------------------------ fechas
     def _al_cambiar_desembolso(self) -> None:
+        """Al cambiar el desembolso, propone el 1er vencimiento habitual (+1 mes hábil) y descarta el traslado manual."""
         try:
             d = validar_fecha("desembolso", "la fecha de desembolso", self.p_desemb.get())
         except ErrorValidacion:
@@ -306,6 +338,7 @@ class App(tk.Tk):
         self.p_vto.set(f.fecha_dmy(siguiente_mes_habil(d)))
 
     def _normalizar_vto(self) -> None:
+        """Valida el 1er vencimiento: no puede ser anterior al desembolso; si cae en fin de semana lo pasa al lunes."""
         try:
             d = validar_fecha("primer_vto", "el primer vencimiento", self.p_vto.get())
             des = validar_fecha("desembolso", "la fecha de desembolso", self.p_desemb.get())
@@ -324,10 +357,15 @@ class App(tk.Tk):
 
     # ------------------------------------------------------------------ lectura y validación
     def _validar_parametros(self) -> tuple[ParametrosProforma | None, dict[str, str]]:
+        """Valida todos los parámetros a la vez.
+
+        Devuelve (ParametrosProforma, {}) si todo es válido o (None, {clave: mensaje}) si hay errores, de modo que se puedan marcar todos los campos incorrectos en una sola pasada.
+        """
         errores: dict[str, str] = {}
         val: dict = {}
 
         def intentar(clave: str, fn):
+            """Ejecuta una validación y guarda su valor o su mensaje de error."""
             try:
                 val[clave] = fn()
             except ErrorValidacion as e:
@@ -346,6 +384,8 @@ class App(tk.Tk):
         if errores:
             return None, errores
         habil, nominal = normalizar_primer_vencimiento(val["primer_vto"], val["desembolso"])
+        # Si el campo ya muestra el lunes al que se trasladó un vencimiento de fin de semana,
+        # se conserva la fecha original (nominal): el cálculo la necesita para contar los meses.
         if nominal is None and self.nominal and habil == siguiente_dia_habil(self.nominal):
             nominal = self.nominal
         return ParametrosProforma(
@@ -355,6 +395,7 @@ class App(tk.Tk):
         ), errores
 
     def _validar_cliente(self) -> tuple[dict, dict[str, str]]:
+        """Valida los datos del cliente. Devuelve (valores normalizados, {clave: mensaje de error})."""
         errores: dict[str, str] = {}
         val: dict = {}
         for clave, fn, campo in (
@@ -372,12 +413,14 @@ class App(tk.Tk):
         return val, errores
 
     def _mostrar_errores_cliente(self, errores: dict[str, str]) -> None:
+        """Escribe (o limpia) el mensaje de error bajo cada campo del cliente."""
         for clave, campo in (("nombre", self.c_nombre), ("documento", self.c_doc), ("telefono", self.c_tel)):
             campo.mostrar_error(errores.get(clave, ""))
         self.e_obs.configure(text=errores.get("observaciones", ""))
 
     # ------------------------------------------------------------------ cálculo en vivo
     def recalcular(self) -> None:
+        """Recalcula en vivo. Con parámetros inválidos marca los errores y limpia el resultado, sin romper."""
         params, errores = self._validar_parametros()
         for clave, campo in self._campos_param().items():
             campo.mostrar_error(errores.get(clave, ""))
@@ -389,6 +432,7 @@ class App(tk.Tk):
         self._mostrar_resultado(self.resultado)
 
     def _limpiar_resultados(self) -> None:
+        """Deja las tarjetas, las tasas y el cuotero vacíos (parámetros inválidos)."""
         for v, s in self.kpi.values():
             v.configure(text="—")
             s.configure(text="Corrija los parámetros marcados")
@@ -397,6 +441,7 @@ class App(tk.Tk):
         self.tv_cuotero.delete(*self.tv_cuotero.get_children())
 
     def _mostrar_resultado(self, r: ResultadoProforma) -> None:
+        """Vuelca el resultado del cálculo en las tarjetas, el resumen de tasas/fechas y el cuotero."""
         d = r.decimales
         p = r.params
         self.kpi["cuota"][0].configure(text=f.gs(r.cuota_final, d))
@@ -425,6 +470,7 @@ class App(tk.Tk):
         self._pintar_cuotero()
 
     def _pintar_cuotero(self) -> None:
+        """Redibuja la tabla del cuotero según la vista elegida y agrega la fila de totales."""
         tv = self.tv_cuotero
         tv.delete(*tv.get_children())
         analitica = self.vista.get() == "analitica"
@@ -458,6 +504,10 @@ class App(tk.Tk):
 
     # ------------------------------------------------------------------ acciones
     def _datos_para_guardar(self) -> tuple[dict, ResultadoProforma, dict] | None:
+        """Valida cliente y parámetros y arma el diccionario a persistir.
+
+        Si hay errores los muestra (campos en rojo + aviso con la lista) y devuelve None.
+        """
         cliente, err_c = self._validar_cliente()
         params, err_p = self._validar_parametros()
         self._mostrar_errores_cliente(err_c)
@@ -484,6 +534,7 @@ class App(tk.Tk):
         return datos, resultado, cliente
 
     def guardar(self) -> None:
+        """Guarda una proforma nueva o actualiza la que se está editando."""
         pre = self._datos_para_guardar()
         if pre is None:
             return
@@ -505,6 +556,7 @@ class App(tk.Tk):
         self._refrescar_lista()
 
     def pdf_actual(self) -> None:
+        """Genera el PDF de lo que hay en pantalla (exige datos válidos del cliente; no requiere haber guardado)."""
         pre = self._datos_para_guardar()
         if pre is None:
             return
@@ -517,6 +569,7 @@ class App(tk.Tk):
                          cliente["telefono"], cliente["observaciones"])
 
     def pdf_seleccion(self) -> None:
+        """Genera el PDF de la proforma seleccionada en la lista, recalculándola desde sus parámetros."""
         reg = self._seleccion()
         if reg is None:
             return
@@ -525,6 +578,7 @@ class App(tk.Tk):
                          reg.documento, reg.telefono, reg.observaciones)
 
     def _emitir_pdf(self, resultado, nro, emision, nombre, documento, telefono, obs) -> None:
+        """Escribe el PDF en la carpeta configurada con un nombre seguro y lo abre con el visor predeterminado."""
         archivo = f"Proforma_{nro or 'SIN_GUARDAR'}_{nombre_archivo_seguro(nombre)}.pdf"
         try:
             ruta = generar_pdf(self.cfg.pdf_dir / archivo, resultado, self.cfg, nro_operacion=nro,
@@ -543,6 +597,7 @@ class App(tk.Tk):
 
     @staticmethod
     def _params_de(reg: Proforma) -> ParametrosProforma:
+        """Reconstruye los parámetros de cálculo a partir de un registro guardado."""
         return ParametrosProforma(
             capital=reg.capital, tasa_anual=reg.tasa_anual, cuotas=reg.cuotas, iva_pct=reg.iva_pct,
             pct_gastos=reg.pct_gastos, tasa_seguro=reg.tasa_seguro, redondear=bool(reg.redondeo_entero),
@@ -552,6 +607,7 @@ class App(tk.Tk):
         )
 
     def _seleccion(self) -> Proforma | None:
+        """Devuelve la proforma seleccionada en la lista (avisa si no hay ninguna o si ya no existe)."""
         sel = self.tv_guardadas.selection()
         if not sel:
             messagebox.showinfo("Seleccione una proforma", "Primero seleccione una proforma de la lista.")
@@ -567,6 +623,7 @@ class App(tk.Tk):
         return reg
 
     def editar_seleccion(self) -> None:
+        """Carga la proforma seleccionada en el formulario y entra en modo edición."""
         reg = self._seleccion()
         if reg is None:
             return
@@ -592,12 +649,14 @@ class App(tk.Tk):
         self._estado(f"Editando proforma {reg.nro_operacion} de {reg.nombre_cliente}.")
 
     def _poner_edicion(self, reg: Proforma) -> None:
+        """Muestra el aviso 'Modo edición' y cambia el texto del botón guardar."""
         self.editando = reg.id
         self.banner_txt.configure(text=f"Modo edición — Proforma {reg.nro_operacion}: al guardar se actualiza el registro.")
         self.banner.pack(fill="x", padx=12, pady=(10, 0), before=self.cuerpo.winfo_children()[1])
         self.b_guardar.configure(text=f"Actualizar Proforma {reg.nro_operacion}")
 
     def eliminar_seleccion(self) -> None:
+        """Elimina la proforma seleccionada, previa confirmación explícita del usuario."""
         reg = self._seleccion()
         if reg is None:
             return
@@ -643,6 +702,7 @@ class App(tk.Tk):
         self.recalcular()
 
     def _refrescar_lista(self) -> None:
+        """Recarga la lista de proformas guardadas aplicando el filtro del buscador."""
         try:
             filas = self.repo.listar(self.busqueda.get())
         except ErrorBaseDatos as e:
@@ -658,7 +718,52 @@ class App(tk.Tk):
                 f.gs(p.total_pagar, d)))
         self.lbl_cant.configure(text=f"{len(filas)} registro(s)")
 
+    def importar(self) -> None:
+        """Importa un respaldo (.db): combinar con lo actual o reemplazarlo (con copia automática)."""
+        origen = filedialog.askopenfilename(
+            title="Seleccione el respaldo de la base de datos a importar",
+            filetypes=[("Base de datos SQLite", "*.db *.sqlite *.sqlite3"), ("Todos los archivos", "*.*")])
+        if not origen:
+            return
+        eleccion = messagebox.askyesnocancel(
+            "Importar base de datos",
+            "¿Cómo desea importar las proformas del respaldo?\n\n"
+            "SÍ  →  COMBINAR: agrega las proformas que no tiene, sin borrar las actuales.\n"
+            "NO  →  REEMPLAZAR: borra las proformas actuales y deja las del respaldo\n"
+            "            (se guarda antes una copia automática de seguridad).\n"
+            "CANCELAR  →  no hacer nada.",
+            icon="question", default="yes")
+        if eleccion is None:
+            return
+        modo = "combinar" if eleccion else "reemplazar"
+        if modo == "reemplazar" and not messagebox.askyesno(
+                "Confirmar reemplazo",
+                "Se eliminarán todas las proformas actuales y se cargarán las del respaldo.\n\n¿Desea continuar?",
+                icon="warning", default="no"):
+            return
+        copia = self.cfg.db_path.parent / "backups" / f"antes_de_importar_{datetime.now():%Y%m%d_%H%M%S}.db"
+        try:
+            res = self.repo.importar(origen, modo, copia_previa=copia)
+        except ErrorBaseDatos as e:
+            log.warning("Importación rechazada: %s", e)
+            self._estado(str(e), error=True)
+            messagebox.showerror("No se pudo importar", str(e))
+            return
+        self.nueva(restablecer=False)
+        self._refrescar_lista()
+        partes = [f"Importadas: {res.importadas}"]
+        if res.duplicadas:
+            partes.append(f"ya existentes (omitidas): {res.duplicadas}")
+        if res.invalidas:
+            partes.append(f"descartadas por datos inválidos: {res.invalidas}")
+        texto = " · ".join(partes)
+        if res.copia_previa:
+            texto += f"\n\nCopia de seguridad previa:\n{res.copia_previa}"
+        self._estado(f"Importación ({modo}) finalizada. " + " · ".join(partes))
+        messagebox.showinfo("Importación finalizada", texto)
+
     def respaldar(self) -> None:
+        """Guarda una copia de la base de datos en la ubicación que elija el usuario."""
         destino = filedialog.asksaveasfilename(
             title="Guardar respaldo de la base de datos", defaultextension=".db",
             initialfile=f"Proformas_respaldo_{date.today().isoformat()}.db", filetypes=[("Base de datos SQLite", "*.db")])

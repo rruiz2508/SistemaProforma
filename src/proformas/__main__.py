@@ -10,6 +10,10 @@ from .db import ErrorBaseDatos, RepositorioProformas
 
 
 def main() -> None:
+    """Configura el log, abre la base de datos y lanza la ventana principal (bucle de eventos de Tk).
+
+    Si la base de datos no se puede abrir muestra un mensaje claro y termina con código 1.
+    """
     cfg = cargar_config()
     try:
         cfg.log_path.parent.mkdir(parents=True, exist_ok=True)

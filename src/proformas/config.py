@@ -22,6 +22,7 @@ def _cargar_dotenv(ruta: Path) -> None:
 
 @dataclass(frozen=True)
 class Config:
+    """Configuración de la aplicación (rutas y datos institucionales que aparecen en el PDF)."""
     db_path: Path
     pdf_dir: Path
     log_path: Path
@@ -32,11 +33,16 @@ class Config:
 
 
 def _ruta(valor: str) -> Path:
+    """Convierte una ruta relativa en absoluta respecto de la raíz del proyecto."""
     p = Path(valor)
     return p if p.is_absolute() else RAIZ / p
 
 
 def cargar_config() -> Config:
+    """Lee las variables PROFORMAS_* (y el archivo .env si existe) y devuelve la configuración.
+
+    Todas tienen valores por defecto, así que la aplicación funciona sin .env.
+    """
     _cargar_dotenv(RAIZ / ".env")
     env = os.environ.get
     return Config(

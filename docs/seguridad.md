@@ -16,6 +16,8 @@ una revisión manual documentada.
 | S9 | **Dependencias mínimas y fijadas** | Solo `reportlab` (y `pytest` en desarrollo). `requirements.txt` con versión mínima. | `pip list` / `pip audit` (opcional) antes de la entrega. |
 | S10 | **Revisión del código generado por IA** | Todo código de IA se lee, se ejecuta y se prueba antes de aceptarlo (ver `uso-de-ia.md`). | Historial git + bitácora. |
 
+| S11 | **Archivos externos no confiables (importar BD)** | El respaldo se abre en solo lectura; se comprueba cabecera SQLite, `quick_check`, tabla y columnas esperadas; cada fila se valida con los mismos validadores de la UI y rangos numéricos; el resultado se aplica en una transacción (todo o nada); en "Reemplazar" se hace copia previa. | `tests/test_importar.py`: archivo de texto, SQLite ajeno, filas con texto en campos numéricos, fechas inválidas y HTML en el nombre. |
+
 ## Qué es un dato "sensible" aquí
 
 Documento de identidad y teléfono del cliente. Por eso: la BD es local, no se sube al repositorio, no se

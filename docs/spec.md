@@ -82,6 +82,8 @@ Restricciones `CHECK` en BD (capital > 0, cuotas 1–120, porcentajes ≥ 0) com
 | F7 | Generar PDF | PDF A4 con datos del cliente, resumen y cuotero completo, a `data/pdf/`. Se abre al terminar. |
 | F8 | Nueva / limpiar | Restablece el formulario a valores por defecto. |
 | F9 | Respaldo de BD | Copia el archivo `.db` a una ubicación elegida por el usuario. |
+| F10 | Importar BD | Carga un respaldo `.db` (p. ej. de otra máquina). Modo **Combinar** (agrega lo que falta, sin duplicar ni borrar) o **Reemplazar** (con confirmación y copia automática previa en `data/backups/`). Valida que sea un SQLite de proformas y descarta filas inválidas. |
+| F11 | Selector de calendario | Los campos de fecha se pueden escribir (DD/MM/AAAA) o elegir con el botón 📅 (calendario con navegación por mes/año y botón "Hoy"). |
 
 ## 5. Pantalla principal (Tkinter)
 

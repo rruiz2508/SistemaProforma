@@ -1,47 +1,4 @@
 """Prueba de humo de la UI: crea la ventana real y simula el flujo del usuario (sin mainloop)."""
-import tkinter as tk
-from dataclasses import replace
-
-import pytest
-
-from proformas.config import cargar_config
-from proformas.db import RepositorioProformas
-
-
-@pytest.fixture(scope="module")
-def _ventana(tmp_path_factory):
-    """Una sola ventana Tk por módulo (crear/destruir muchas es inestable en Tk 8.6/Windows)."""
-    from proformas.ui import app as modulo
-
-    tmp = tmp_path_factory.mktemp("ui")
-    cfg = replace(cargar_config(), pdf_dir=tmp / "pdf")
-    try:
-        a = modulo.App(cfg, RepositorioProformas(tmp / "ui.db"))
-    except tk.TclError:
-        pytest.skip("Sin entorno gráfico")
-    a.withdraw()
-    yield a, modulo
-    a.destroy()
-
-
-@pytest.fixture
-def app(_ventana, monkeypatch):
-    a, modulo = _ventana
-    mensajes = []
-    for nombre in ("showwarning", "showerror", "showinfo"):
-        monkeypatch.setattr(modulo.messagebox, nombre, lambda t, m, _n=nombre, **k: mensajes.append((_n, m)))
-    monkeypatch.setattr(modulo.messagebox, "askyesno", lambda *a, **k: True)
-    monkeypatch.setattr(modulo.os, "startfile", lambda p: None, raising=False)
-    for r in a.repo.listar():
-        a.repo.eliminar(r.id)
-    a.vista.set("comercial")
-    a.busqueda.set("")
-    a.nueva(restablecer=True)
-    a.mensajes = mensajes
-    a.update()
-    return a
-
-
 def llenar_cliente(a, nombre="Juan Pérez", doc="4567890", tel="0981 555-123"):
     a.c_nombre.set(nombre)
     a.c_doc.set(doc)
