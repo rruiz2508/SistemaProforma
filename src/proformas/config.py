@@ -2,10 +2,23 @@
 from __future__ import annotations
 
 import os
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 
-RAIZ = Path(__file__).resolve().parents[2]
+def _raiz() -> Path:
+    """Carpeta base donde viven `.env` y `data/`.
+
+    Desde el código fuente es la raíz del proyecto. Dentro del ejecutable (PyInstaller) el código
+    se descomprime en una carpeta temporal, así que se usa la carpeta donde está el .exe: de ese
+    modo la base de datos y los PDF persisten junto al programa.
+    """
+    if getattr(sys, "frozen", False):
+        return Path(sys.executable).resolve().parent
+    return Path(__file__).resolve().parents[2]
+
+
+RAIZ = _raiz()
 
 
 def _cargar_dotenv(ruta: Path) -> None:

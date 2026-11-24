@@ -77,6 +77,20 @@ python main.py
 Equivalente: `python -m proformas` (con `PYTHONPATH=src`). La primera vez se crea
 `data/proformas.db`; los PDF se guardan en `data/pdf/`.
 
+### Ejecutable de Windows (.exe)
+
+Para usar la aplicación en una PC **sin Python instalado** se genera un único archivo:
+
+```powershell
+.\construir_exe.ps1          # crea dist\SistemaProformas.exe (~32 MB)
+```
+
+Basta copiar `SistemaProformas.exe` a cualquier carpeta de otra PC con Windows y hacer doble clic.
+La base de datos (`data\proformas.db`), los PDF (`data\pdf\`) y el log se crean **junto al .exe**, por
+lo que conviene ponerlo en su propia carpeta. Para actualizar la aplicación se reemplaza solo el .exe
+(los datos de `data\` se conservan). Si Windows SmartScreen avisa que es una aplicación desconocida
+(el .exe no está firmado digitalmente), elegir *Más información → Ejecutar de todas formas*.
+
 ## Guía de uso
 
 La ventana tiene cuatro secciones numeradas:
@@ -154,6 +168,8 @@ inesperada cierra la aplicación ni muestra un error técnico.
 ```
 SistemaProforma/
 ├── main.py                    # atajo para ejecutar: python main.py
+├── construir_exe.ps1          # genera dist\SistemaProformas.exe con PyInstaller
+├── assets/icono.ico           # ícono de la ventana y del ejecutable
 ├── requirements.txt           # reportlab, pytest
 ├── pyproject.toml             # configuración de pytest
 ├── .env.example               # variables de entorno de ejemplo

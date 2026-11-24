@@ -3,13 +3,15 @@ from __future__ import annotations
 
 import logging
 import os
+import sys
 import tkinter as tk
 from datetime import date, datetime
+from pathlib import Path
 from tkinter import filedialog, messagebox, ttk
 
 from .. import formato as f
 from ..calculo import ParametrosProforma, ResultadoProforma, calcular_proforma, normalizar_primer_vencimiento
-from ..config import Config
+from ..config import RAIZ, Config
 from ..db import ErrorBaseDatos, Proforma, RepositorioProformas
 from ..fechas import siguiente_dia_habil, siguiente_mes_habil
 from ..pdf import ErrorPdf, generar_pdf, nombre_archivo_seguro
@@ -66,6 +68,7 @@ class App(tk.Tk):
         self.vista = tk.StringVar(value="comercial")
 
         self.title("Sistema de Proformas · Fundación Industrial")
+        self._poner_icono()
         self.geometry("1240x860")
         self.minsize(900, 600)
         configurar_estilos(self)
@@ -88,6 +91,17 @@ class App(tk.Tk):
         )
 
     # ------------------------------------------------------------------ construcción de la UI
+    def _poner_icono(self) -> None:
+        """Usa assets/icono.ico como ícono de la ventana (si no se encuentra, se omite sin error).
+
+        En el ejecutable PyInstaller los recursos se descomprimen en `sys._MEIPASS`.
+        """
+        base = Path(getattr(sys, "_MEIPASS", RAIZ))
+        try:
+            self.iconbitmap(str(base / "assets" / "icono.ico"))
+        except tk.TclError:
+            pass
+
     def _construir(self) -> None:
         """Arma la estructura general: barra superior, barra de estado y el cuerpo con desplazamiento vertical."""
         barra = ttk.Frame(self, style="Oscuro.TFrame")
